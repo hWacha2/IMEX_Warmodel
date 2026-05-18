@@ -1,17 +1,133 @@
-flutter/ephemeral/
+# -----------------------
+# System / misc
+# -----------------------
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.class
 
-# Visual Studio user-specific files.
-*.suo
+# -----------------------
+# IDE / editors
+# -----------------------
+# JetBrains
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (раскомментируй, если не хочешь хранить настройки)
+.vscode/
+
+# Other editors
+.atom/
+.history/
+
+# -----------------------
+# Flutter / Dart
+# -----------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+**/build/
+**/ios/Flutter/.last_build_id
+**/doc/api/
+coverage/
+.flutter-plugins-dependencies
+
+# Android Studio / Android build
+/android/.gradle/
+/android/app/debug
+/android/app/profile
+/android/app/release
+**/local.properties
+
+# iOS
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/ServiceDefinitions.json
+
+# -----------------------
+# C++ / build artifacts
+# -----------------------
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+build/
+out/
+bin/
+lib/
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.exe
+*.pdb
+
+# Visual Studio
+*.vcxproj*
+*.sln
 *.user
-*.userosscache
-*.sln.docstates
+*.suo
+ipch/
+*.idb
+*.ipdb
 
-# Visual Studio build-related files.
-x64/
-x86/
+# MinGW / mingw-w64
+*.exe
+*.dll
 
-# Visual Studio cache files
-# files ending in .cache can be ignored
-*.[Cc]ache
-# but keep track of directories ending in .cache
-!*.[Cc]ache/
+# -----------------------
+# Generated / packaging
+# -----------------------
+*.apk
+*.ap_
+*.ipa
+*.dSYM/
+*.symbols
+app.*.map.json
+
+# -----------------------
+# Secrets / credentials
+# -----------------------
+.env
+*.keystore
+*.jks
+*.pem
+*.p12
+credentials.json
+
+# -----------------------
+# Misc large / binary
+# -----------------------
+*.zip
+*.tar.gz
+*.7z
+*.bin
+*.iso
+
+# If you use Git LFS, track large files instead of committing them
+# git lfs track "*.bin"
+
+# -----------------------
+# Project-specific (examples / data)
+# -----------------------
+/examples/*.db
+/examples/data/
+/docs/_build/
+
+# -----------------------
+# Local OS files
+# -----------------------
+desktop.ini

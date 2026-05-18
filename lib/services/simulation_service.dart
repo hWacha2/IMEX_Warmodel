@@ -71,6 +71,12 @@ class SimulationService {
         (i) => List<double>.generate(
             timeCount, (t) => _ffi.getBSupply(ptr, i, t)));
 
+    // === НОВОЕ: Чтение активности БПЛА ===
+    final uavActivityA = List<double>.generate(
+        timeCount, (t) => _ffi.getUavActivityA(ptr, t));
+    final uavActivityB = List<double>.generate(
+        timeCount, (t) => _ffi.getUavActivityB(ptr, t));
+
     return SimulationResults(
       time: time,
       aCounts: aCounts,
@@ -79,6 +85,10 @@ class SimulationService {
       bMorale: bMorale,
       aSupply: aSupply,
       bSupply: bSupply,
+      // === НОВОЕ: Активность БПЛА ===
+      uavActivityA: uavActivityA,
+      uavActivityB: uavActivityB,
+      // Статистика
       executionTimeMs: _ffi.getExecutionTime(ptr),
       totalIterations: _ffi.getTotalIterations(ptr),
       convergenceFailures: _ffi.getConvergenceFailures(ptr),
@@ -87,7 +97,6 @@ class SimulationService {
       finalForceA: _ffi.getFinalForceA(ptr),
       finalForceB: _ffi.getFinalForceB(ptr),
       winner: _ffi.getWinner(ptr),
-      // ➕ НОВАЯ статистика сходимости
       avgNewtonIterations: _ffi.getAvgNewtonIterations(ptr),
       maxNewtonIterations: _ffi.getMaxNewtonIterations(ptr),
     );
