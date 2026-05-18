@@ -102,6 +102,10 @@ class _UnitCardState extends State<UnitCard> {
                       widget.unit.moraleDecay.toStringAsFixed(3), context),
                   _buildInfoRow('Затухание снабжения:',
                       widget.unit.supplyDecay.toStringAsFixed(3), context),
+                  _buildInfoRow(
+                      'Чувств. к снабжению:',
+                      widget.unit.cpSupplySensitivity.toStringAsFixed(2),
+                      context),
 
                   // === Отображение тегов ===
                   if (widget.unit.isUav || widget.unit.isFpv) ...[
@@ -126,8 +130,8 @@ class _UnitCardState extends State<UnitCard> {
                           const SizedBox(width: 8),
                           Text(
                             widget.unit.isUav
-                                ? 'Разведывательный БПЛА'
-                                : 'Ударный FPV-дрон',
+                                ? 'БПЛА'
+                                : 'FPV-дрон',
                             style: TextStyle(
                               color: FluentTheme.of(context).accentColor,
                               fontWeight: FontWeight.w500,
@@ -198,7 +202,6 @@ class _UnitCardState extends State<UnitCard> {
     );
   }
 }
-
 /// Диалог редактирования типа войск
 class _EditUnitDialog extends StatefulWidget {
   final UnitType unit;
@@ -292,7 +295,6 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
     _moraleDecayController.dispose();
     _supplyDecayController.dispose();
     _cpSupplySensController.dispose();
-
     super.dispose();
   }
 
@@ -321,6 +323,7 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
   Widget build(BuildContext context) {
     final isDrone = _isUav || _isFpv;
     final isFpvOnly = _isFpv;
+    final isUavOnly = _isUav;
 
     return ContentDialog(
       title: const Text('Редактирование типа войск'),
@@ -329,30 +332,39 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Название
+              const Text('Название', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
               TextBox(
                 controller: _nameController,
                 placeholder: 'Название',
               ),
               const SizedBox(height: 12),
+
+              // Численность
+              const Text('Начальная численность', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
               TextBox(
                 controller: _countController,
                 placeholder: 'Начальная численность',
               ),
               const SizedBox(height: 12),
 
-              // Боевая мощь (блокируется для UAV)
+              // Боевая мощь
+              const Text('Боевая мощь (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
               if (_isUav)
                 TextBox(
                   controller: TextEditingController(text: '0.0'),
-                  placeholder: 'Боевая мощь (0-1)',
                   readOnly: true,
                   enabled: false,
                 )
               else
                 TextBox(
                   controller: _combatPowerController,
-                  placeholder: 'Боевая мощь (0-1)',
+                  placeholder: _isFpv ? '0.8' : '0.7',
                 ),
               if (_isUav)
                 Padding(
@@ -364,21 +376,21 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                         color: FluentTheme.of(context).inactiveColor),
                   ),
                 ),
-
               const SizedBox(height: 12),
 
-              // Защита (блокируется для всех дронов)
+              // Защита
+              const Text('Защита (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
               if (isDrone)
                 TextBox(
                   controller: TextEditingController(text: '1.0'),
-                  placeholder: 'Защита (0-1)',
                   readOnly: true,
                   enabled: false,
                 )
               else
                 TextBox(
                   controller: _defenseController,
-                  placeholder: 'Защита (0-1)',
+                  placeholder: '0.5',
                 ),
               if (isDrone)
                 Padding(
@@ -390,12 +402,19 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                         color: FluentTheme.of(context).inactiveColor),
                   ),
                 ),
-
               const SizedBox(height: 12),
 
-              // === Секция тегов ===
-              const Text('Тип подразделения',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              // Теги БПЛА/FPV
+              const Text('Тип подразделения', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              InfoBar(
+                title: const Text('Специализированные средства'),
+                content: const Text(
+                  'БПЛА и FPV дроны имеют особую динамику: '
+                  'они не подвержены моральному фактору и исключены из огневой матрицы.',
+                ),
+                severity: InfoBarSeverity.info,
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -418,9 +437,8 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
               ),
               const SizedBox(height: 12),
 
-              // === Поле морали с блокировкой ===
-              const Text('Мораль (0-1)',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              // Мораль
+              const Text('Мораль (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               Opacity(
                 opacity: isDrone ? 0.5 : 1.0,
@@ -428,7 +446,7 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                   ignoring: isDrone,
                   child: TextBox(
                     controller: _moraleController,
-                    placeholder: 'Мораль',
+                    placeholder: '0.9',
                     readOnly: isDrone,
                   ),
                 ),
@@ -446,21 +464,19 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                 ),
               const SizedBox(height: 12),
 
-              // === Поле снабжения с блокировкой для FPV ===
-              const Text('Снабжение (0-1)',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              // Снабжение
+              const Text('Снабжение (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               if (isFpvOnly)
                 TextBox(
                   controller: TextEditingController(text: '1.0'),
-                  placeholder: 'Снабжение (0-1)',
                   readOnly: true,
                   enabled: false,
                 )
               else
                 TextBox(
                   controller: _supplyController,
-                  placeholder: 'Снабжение (0-1)',
+                  placeholder: '1.0',
                 ),
               if (isFpvOnly)
                 Padding(
@@ -475,9 +491,8 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                 ),
               const SizedBox(height: 12),
 
-              // === Затухание морали с блокировкой ===
-              const Text('Затухание морали',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              // Затухание морали
+              const Text('Затухание морали', style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               Opacity(
                 opacity: isDrone ? 0.5 : 1.0,
@@ -485,37 +500,73 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                   ignoring: isDrone,
                   child: TextBox(
                     controller: _moraleDecayController,
-                    placeholder: 'Затухание морали',
+                    placeholder: '0.02',
                     readOnly: isDrone,
                   ),
                 ),
               ),
               const SizedBox(height: 12),
 
-              // === Затухание снабжения с блокировкой для FPV ===
-              const Text('Затухание снабжения',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              // Затухание снабжения
+              const Text('Затухание снабжения', style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               if (isFpvOnly)
                 TextBox(
                   controller: TextEditingController(text: '0.0'),
-                  placeholder: 'Затухание снабжения',
                   readOnly: true,
                   enabled: false,
                 )
               else
                 TextBox(
                   controller: _supplyDecayController,
-                  placeholder: 'Затухание снабжения',
+                  placeholder: '0.01',
                 ),
-              const Text('Чувствительность к снабжению (0-1)',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
-              TextBox(
-                controller: _cpSupplySensController,
-                placeholder: '0.3',
-              ),
+              if (isFpvOnly)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Логистическое истощение для FPV отключено',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: FluentTheme.of(context).inactiveColor,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 12),
+
+              // Чувствительность к снабжению
+              const Text('Чувствительность к снабжению (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
+              if (isFpvOnly)
+                TextBox(
+                  controller: TextEditingController(text: '0.0'),
+                  readOnly: true,
+                  enabled: false,
+                )
+              else
+                TextBox(
+                  controller: _cpSupplySensController,
+                  placeholder: isUavOnly ? '0.5' : '0.3',
+                ),
+              const SizedBox(height: 4),
+              // Динамическая подсказка
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  isFpvOnly
+                      ? 'Для FPV-дронов параметр неактивен (равен 0).'
+                      : isUavOnly
+                          ? 'Влияет на эффективность разведки: чем выше, тем сильнее падает активность БПЛА при потере снабжения.'
+                          : 'Насколько сильно падение снабжения снижает боевую мощь.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isFpvOnly 
+                        ? FluentTheme.of(context).inactiveColor 
+                        : (isUavOnly ? const Color(0xFF448AFF).withValues(alpha: 0.8) : FluentTheme.of(context).inactiveColor),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -558,8 +609,11 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
         _isFpv ? 1.0 : (double.tryParse(_supplyController.text) ?? 1.0);
     final effectiveSupplyDecay =
         _isFpv ? 0.0 : (double.tryParse(_supplyDecayController.text) ?? 0.01);
-    final effectiveCpSupplySens =
-        double.tryParse(_cpSupplySensController.text) ?? 0.3;
+    
+    // 5. Чувствительность к снабжению
+    final effectiveCpSupplySens = _isFpv 
+        ? 0.0 
+        : (double.tryParse(_cpSupplySensController.text) ?? 0.3);
 
     final updated = UnitType(
       name: _nameController.text,

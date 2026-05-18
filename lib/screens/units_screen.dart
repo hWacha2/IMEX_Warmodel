@@ -157,7 +157,7 @@ class _AddUnitDialogState extends State<_AddUnitDialog> {
   final _supplyDecayController = TextEditingController(text: '0.01');
   final _cpSupplySensController = TextEditingController(text: '0.3');
 
-  // === НОВОЕ: Флаги для БПЛА/FPV ===
+  // === Флаги для БПЛА/FPV ===
   bool _isUav = false;
   bool _isFpv = false;
 
@@ -220,6 +220,10 @@ class _AddUnitDialogState extends State<_AddUnitDialog> {
     final isDrone = _isUav || _isFpv;
     final isFpvOnly = _isFpv;
     final isUavOnly = _isUav;
+    
+    // === Единый стиль для акцентного цвета ===
+    const accentColor = Color(0xFF448AFF);
+    final accentColorFaded = accentColor.withValues(alpha: 0.8);
 
     return ContentDialog(
       title: Text(
@@ -458,7 +462,7 @@ class _AddUnitDialogState extends State<_AddUnitDialog> {
                     fontSize: 12,
                     color: isFpvOnly 
                         ? FluentTheme.of(context).inactiveColor 
-                        : (isUavOnly ? const Color(0xFF448AFF).withOpacity(0.8): FluentTheme.of(context).inactiveColor),
+                        : (isUavOnly ? accentColorFaded : FluentTheme.of(context).inactiveColor),
                   ),
                 ),
               ),
