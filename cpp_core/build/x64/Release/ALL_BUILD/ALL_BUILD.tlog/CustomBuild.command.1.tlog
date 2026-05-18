@@ -1,0 +1,10 @@
+^F:\DOCUMENTS\UCHEBNOE 2\DIPLOM\WARMODEL_2\CPP_CORE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SF:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core" "-BF:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build" --check-stamp-file "F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

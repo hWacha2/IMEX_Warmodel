@@ -1,0 +1,10 @@
+^F:\DOCUMENTS\UCHEBNOE 2\DIPLOM\WARMODEL_2\CPP_CORE\BUILD\CMAKEFILES\D594382DC91CBA53ADF2618C94CC8F3A\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SF:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core" "-BF:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/CombatCore.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

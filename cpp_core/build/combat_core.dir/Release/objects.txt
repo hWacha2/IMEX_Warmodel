@@ -1,0 +1,5 @@
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/Release/types.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/Release/matrix.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/Release/file_io.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/Release/solver.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/Release/ffi_interface.obj

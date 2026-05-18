@@ -1,0 +1,3 @@
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/CMakeFiles/combat_core.dir
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/CMakeFiles/ALL_BUILD.dir
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/CMakeFiles/ZERO_CHECK.dir

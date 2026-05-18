@@ -1,0 +1,47 @@
+name: warmodel
+description: Программный комплекс для моделирования боевых действий
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  video_player: ^2.5.1
+  video_player_win: ^3.2.2
+
+  # UI компоненты
+  fluent_ui: ^4.15.1
+  fl_chart: ^1.2.0
+  window_plus:
+    git:
+      url: https://github.com/melo936/window_plus
+      #url: https://github.com/alexmercerind/window_plus
+  
+  win32: ^5.0.0
+  fluentui_system_icons: ^1.1.273
+  # FFI для связи с C++
+  ffi: ^2.1.0
+  path_provider: ^2.1.1
+  
+  # Работа с файлами
+  file_picker: ^11.0.2
+  
+  # Управление состоянием
+  provider: ^6.1.1
+  
+  # Форматирование
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/

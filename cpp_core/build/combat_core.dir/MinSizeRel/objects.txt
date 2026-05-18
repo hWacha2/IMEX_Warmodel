@@ -1,0 +1,5 @@
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/MinSizeRel/types.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/MinSizeRel/matrix.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/MinSizeRel/file_io.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/MinSizeRel/solver.obj
+F:/Documents/uchebnoe 2/diplom/warmodel_2/cpp_core/build/combat_core.dir/MinSizeRel/ffi_interface.obj
