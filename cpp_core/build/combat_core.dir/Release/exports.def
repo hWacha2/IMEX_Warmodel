@@ -49,10 +49,8 @@ EXPORTS
 	??$?6U?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@PEBD@Z
 	??$?GUsteady_clock@chrono@std@@V?$duration@_JU?$ratio@$00$0DLJKMKAA@@std@@@12@V312@@chrono@std@@YA?AV?$duration@_JU?$ratio@$00$0DLJKMKAA@@std@@@01@AEBV?$time_point@Usteady_clock@chrono@std@@V?$duration@_JU?$ratio@$00$0DLJKMKAA@@std@@@23@@01@0@Z
 	??$?G_JU?$ratio@$00$0DLJKMKAA@@std@@_JU01@@chrono@std@@YA?AV?$duration@_JU?$ratio@$00$0DLJKMKAA@@std@@@01@AEBV201@0@Z
-	??$?RAEANAEAN@?$plus@X@std@@QEBANAEAN0@Z
 	??$_Adl_verify_range@PEANPEAN@std@@YAXAEBQEAN0@Z
 	??$_Adl_verify_range@PEAV?$vector@NV?$allocator@N@std@@@std@@PEAV12@@std@@YAXAEBQEAV?$vector@NV?$allocator@N@std@@@0@0@Z
-	??$_Adl_verify_range@V?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@V12@@std@@YAXAEBV?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@0@0@Z
 	??$_Allocate@$0BA@U_Default_allocate_traits@std@@@std@@YAPEAX_K@Z
 	??$_Allocate_at_least_helper@V?$allocator@D@std@@@std@@YAPEADAEAV?$allocator@D@0@AEA_K@Z
 	??$_Allocate_at_least_helper@V?$allocator@N@std@@@std@@YAPEANAEAV?$allocator@N@0@AEA_K@Z
@@ -122,7 +120,6 @@ EXPORTS
 	??$_Get_unwrapped@AEBQEAUUnitType@combat_model@@@std@@YA?A_TAEBQEAUUnitType@combat_model@@@Z
 	??$_Get_unwrapped@AEBQEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@std@@YA?A_TAEBQEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z
 	??$_Get_unwrapped@AEBQEAV?$vector@NV?$allocator@N@std@@@std@@@std@@YA?A_TAEBQEAV?$vector@NV?$allocator@N@std@@@0@@Z
-	??$_Get_unwrapped@AEBV?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@@std@@YA?A_TAEBV?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@0@@Z
 	??$_Get_unwrapped@PEAN@std@@YA?A_T$$QEAPEAN@Z
 	??$_Get_unwrapped@PEAUUnitType@combat_model@@@std@@YA?A_T$$QEAPEAUUnitType@combat_model@@@Z
 	??$_Get_unwrapped@PEAV?$vector@NV?$allocator@N@std@@@std@@@std@@YA?A_T$$QEAPEAV?$vector@NV?$allocator@N@std@@@0@@Z
@@ -168,8 +165,6 @@ EXPORTS
 	??$_Uninitialized_value_construct_n@V?$allocator@N@std@@@std@@YAPEANPEAN_KAEAV?$allocator@N@0@@Z
 	??$_Uninitialized_value_construct_n@V?$allocator@UUnitType@combat_model@@@std@@@std@@YAPEAUUnitType@combat_model@@PEAU12@_KAEAV?$allocator@UUnitType@combat_model@@@0@@Z
 	??$_Zero_range@PEAN@std@@YAPEANQEAN0@Z
-	??$accumulate@V?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@N@std@@YANV?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@0@0N@Z
-	??$accumulate@V?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@NU?$plus@X@2@@std@@YANV?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@0@0NU?$plus@X@0@@Z
 	??$addressof@$$CBV?$_Tree_val@U?$_Tree_simple_types@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@@std@@@std@@YAPEBV?$_Tree_val@U?$_Tree_simple_types@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@@0@AEBV10@@Z
 	??$addressof@$$CBV?$codecvt@DDU_Mbstatet@@@std@@@std@@YAPEBV?$codecvt@DDU_Mbstatet@@@0@AEBV10@@Z
 	??$addressof@$$CBV?$vector@NV?$allocator@N@std@@@std@@@std@@YAPEBV?$vector@NV?$allocator@N@std@@@0@AEBV10@@Z
@@ -178,7 +173,6 @@ EXPORTS
 	??$addressof@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@YAPEAU?$pair@QEAXPEAUSimulationResults@combat_model@@@0@AEAU10@@Z
 	??$addressof@V?$_String_val@U?$_Simple_types@D@std@@@std@@@std@@YAPEAV?$_String_val@U?$_Simple_types@D@std@@@0@AEAV10@@Z
 	??$addressof@V?$_Tree_val@U?$_Tree_simple_types@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@@std@@@std@@YAPEAV?$_Tree_val@U?$_Tree_simple_types@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@@0@AEAV10@@Z
-	??$addressof@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@YAPEAV?$_Vector_val@U?$_Simple_types@N@std@@@0@AEAV10@@Z
 	??$addressof@V?$basic_filebuf@DU?$char_traits@D@std@@@std@@@std@@YAPEAV?$basic_filebuf@DU?$char_traits@D@std@@@0@AEAV10@@Z
 	??$addressof@V?$basic_ostream@DU?$char_traits@D@std@@@std@@@std@@YAPEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@@Z
 	??$addressof@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@std@@YAPEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEAV10@@Z
@@ -278,8 +272,6 @@ EXPORTS
 	??0?$_Uninitialized_backout_al@V?$allocator@UUnitType@combat_model@@@std@@@std@@QEAA@PEAUUnitType@combat_model@@AEAV?$allocator@UUnitType@combat_model@@@1@@Z
 	??0?$_Uninitialized_backout_al@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@std@@@std@@QEAA@PEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@AEAV?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@1@@Z
 	??0?$_Uninitialized_backout_al@V?$allocator@V?$vector@NV?$allocator@N@std@@@std@@@std@@@std@@QEAA@PEAV?$vector@NV?$allocator@N@std@@@1@AEAV?$allocator@V?$vector@NV?$allocator@N@std@@@std@@@1@@Z
-	??0?$_Vector_const_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@QEAA@PEANPEBU_Container_base0@1@@Z
-	??0?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@QEAA@PEANPEBU_Container_base0@1@@Z
 	??0?$_Vector_val@U?$_Simple_types@N@std@@@std@@QEAA@PEAN00@Z
 	??0?$_Vector_val@U?$_Simple_types@N@std@@@std@@QEAA@XZ
 	??0?$_Vector_val@U?$_Simple_types@UUnitType@combat_model@@@std@@@std@@QEAA@XZ
@@ -535,7 +527,6 @@ EXPORTS
 	?_Unchecked_end@?$vector@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@@std@@QEBAPEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 	?_Unlock@?$basic_filebuf@DU?$char_traits@D@std@@@std@@UEAAXXZ
 	?_Unwrapped@?$_Tree_iterator@V?$_Tree_val@U?$_Tree_simple_types@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@@std@@@std@@QEBA?AV?$_Tree_unchecked_iterator@V?$_Tree_val@U?$_Tree_simple_types@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@@std@@@2@XZ
-	?_Unwrapped@?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@std@@QEBAPEANXZ
 	?_Xlen_string@std@@YAXXZ
 	?_Xlength@?$vector@NV?$allocator@N@std@@@std@@CAXXZ
 	?_Xlength@?$vector@UUnitType@combat_model@@V?$allocator@UUnitType@combat_model@@@std@@@std@@CAXXZ
@@ -552,7 +543,6 @@ EXPORTS
 	?assign@?$_Narrow_char_traits@DH@std@@SAXAEADAEBD@Z
 	?assign@?$vector@NV?$allocator@N@std@@@std@@QEAAX_KAEBN@Z
 	?assign@?$vector@V?$vector@NV?$allocator@N@std@@@std@@V?$allocator@V?$vector@NV?$allocator@N@std@@@std@@@2@@std@@QEAAX_KAEBV?$vector@NV?$allocator@N@std@@@2@@Z
-	?begin@?$vector@NV?$allocator@N@std@@@std@@QEAA?AV?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@2@XZ
 	?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ
 	?capacity@?$vector@NV?$allocator@N@std@@@std@@QEBA_KXZ
 	?capacity@?$vector@UUnitType@combat_model@@V?$allocator@UUnitType@combat_model@@@std@@@std@@QEBA_KXZ
@@ -578,7 +568,6 @@ EXPORTS
 	?deallocate@?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@std@@QEAAXQEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@_K@Z
 	?deallocate@?$allocator@V?$vector@NV?$allocator@N@std@@@std@@@std@@QEAAXQEAV?$vector@NV?$allocator@N@std@@@2@_K@Z
 	?end@?$_Tree@V?$_Tmap_traits@PEAXPEAUSimulationResults@combat_model@@U?$less@PEAX@std@@V?$allocator@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@4@$0A@@std@@@std@@QEAA?AV?$_Tree_iterator@V?$_Tree_val@U?$_Tree_simple_types@U?$pair@QEAXPEAUSimulationResults@combat_model@@@std@@@std@@@std@@@2@XZ
-	?end@?$vector@NV?$allocator@N@std@@@std@@QEAA?AV?$_Vector_iterator@V?$_Vector_val@U?$_Simple_types@N@std@@@std@@@2@XZ
 	?eof@?$_Narrow_char_traits@DH@std@@SAHXZ
 	?eq_int_type@?$_Narrow_char_traits@DH@std@@SA_NHH@Z
 	?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0@Z

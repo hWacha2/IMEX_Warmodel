@@ -207,15 +207,26 @@ namespace combat_model
             B_exp[j] = B[j] * B_exp_base[j] * mod_factor;
         }
 
-        // Потери (неявная часть)
+        // Потери (неявная часть) — модификатор применяется к ЦЕЛИ, а не к атакующему
         for (size_t i = 0; i < M_; ++i)
         {
-            double modifier_A = (params_.sideA[i].is_uav || params_.sideA[i].is_fpv) ? 0.0 : 1.0;
             for (size_t j = 0; j < N_; ++j)
             {
-                double modifier_B = (params_.sideB[j].is_uav || params_.sideB[j].is_fpv) ? 0.0 : 1.0;
-                g_vec[i] -= alpha_scaled_ * params_.effectivenessBvsA[j][i] * B_atk[j] * A_exp[i] * (1.0 - params_.sideA[i].defense) * modifier_A;
-                g_vec[M_ + j] -= beta_scaled_ * params_.effectivenessAvsB[i][j] * A_atk[i] * B_exp[j] * (1.0 - params_.sideB[j].defense) * modifier_B;
+                // === Потери стороны A (тип i) от огня стороны B (тип j) ===
+                // Цель — тип i стороны A. Если это дрон — он не получает урон от стандартного огня
+                if (!params_.sideA[i].is_uav && !params_.sideA[i].is_fpv)
+                {
+                    g_vec[i] -= alpha_scaled_ * params_.effectivenessBvsA[j][i] *
+                                B_atk[j] * A_exp[i] * (1.0 - params_.sideA[i].defense);
+                }
+
+                // === Потери стороны B (тип j) от огня стороны A (тип i) ===
+                // Цель — тип j стороны B. Если это дрон — он не получает урон от стандартного огня
+                if (!params_.sideB[j].is_uav && !params_.sideB[j].is_fpv)
+                {
+                    g_vec[M_ + j] -= beta_scaled_ * params_.effectivenessAvsB[i][j] *
+                                     A_atk[i] * B_exp[j] * (1.0 - params_.sideB[j].defense);
+                }
             }
         }
 
@@ -235,7 +246,7 @@ namespace combat_model
             }
         }
 
-                for (size_t i = 0; i < M_; ++i)
+        for (size_t i = 0; i < M_; ++i)
         {
             if (params_.sideA[i].is_uav)
             {
@@ -253,31 +264,57 @@ namespace combat_model
         // === НОВОЕ: Вычисление относительных скоростей потерь (ОБЯЗАТЕЛЬНО перед моралью!) ===
         std::vector<double> loss_A(M_, 0.0), loss_B(N_, 0.0);
         for (size_t i = 0; i < M_; ++i)
-            if (A[i] > 1e-6)
+            // Пропускаем БПЛА и FPV
+            if (A[i] > 1e-6 && !params_.sideA[i].is_uav && !params_.sideA[i].is_fpv)
                 loss_A[i] = std::max(0.0, -g_vec[i] / A[i]);
+            else
+                loss_A[i] = 0.0; // Для дронов скорость потерь для морали = 0
         for (size_t j = 0; j < N_; ++j)
-            if (B[j] > 1e-6)
+            if (B[j] > 1e-6 && !params_.sideB[j].is_uav && !params_.sideB[j].is_fpv)
                 loss_B[j] = std::max(0.0, -g_vec[M_ + j] / B[j]);
+            else
+                loss_B[j] = 0.0;
 
-        // Вычисление средневзвешенной скорости потерь противника
-        double r_avg_B = 0.0, r_avg_A = 0.0;
-        double total_B = std::accumulate(B.begin(), B.end(), 0.0);
-        double total_A = std::accumulate(A.begin(), A.end(), 0.0);
+        // === ИСПРАВЛЕНИЕ: Учитываем только "человеческий состав" для морали ===
 
-        if (total_B > 1e-6)
+        // 1. Вычисляем суммарную численность "людей" у противника
+        double A_human_total = 0.0;
+        double B_human_total = 0.0;
+
+        for (size_t i = 0; i < M_; ++i)
+            if (!params_.sideA[i].is_uav && !params_.sideA[i].is_fpv)
+                A_human_total += A[i];
+
+        for (size_t j = 0; j < N_; ++j)
+            if (!params_.sideB[j].is_uav && !params_.sideB[j].is_fpv)
+                B_human_total += B[j];
+
+        // 2. Вычисляем средневзвешенную скорость потерь (только по людям)
+        double r_avg_B = 0.0;
+        double r_avg_A = 0.0;
+
+        if (B_human_total > 1e-6)
         {
             for (size_t j = 0; j < N_; ++j)
-                r_avg_B += loss_B[j] * B[j];
-            r_avg_B /= total_B;
-        }
-        if (total_A > 1e-6)
-        {
-            for (size_t i = 0; i < M_; ++i)
-                r_avg_A += loss_A[i] * A[i];
-            r_avg_A /= total_A;
+            {
+                // Учитываем вклад только если это "человеческий" тип войск
+                if (!params_.sideB[j].is_uav && !params_.sideB[j].is_fpv)
+                    r_avg_B += loss_B[j] * B[j];
+            }
+            r_avg_B /= B_human_total;
         }
 
-        // Мораль (явная часть) — с учётом успехов противника
+        if (A_human_total > 1e-6)
+        {
+            for (size_t i = 0; i < M_; ++i)
+            {
+                if (!params_.sideA[i].is_uav && !params_.sideA[i].is_fpv)
+                    r_avg_A += loss_A[i] * A[i];
+            }
+            r_avg_A /= A_human_total;
+        }
+
+        // 3. Обновление морали (без изменений — использует уже исправленные r_avg)
         for (size_t i = 0; i < M_; ++i)
         {
             f_vec[M_ + N_ + i] = -params_.sideA[i].morale_decay * A_m[i] - params_.moral_debaffA * loss_A[i] * A_m[i] + params_.epsilon_success * r_avg_B * (1.0 - A_m[i]);
@@ -291,15 +328,13 @@ namespace combat_model
         for (size_t i = 0; i < M_; ++i)
         {
             f_vec[2 * M_ + 2 * N_ + i] = -params_.sideA[i].supply_decay * A_s[i];
-            
         }
         for (size_t j = 0; j < N_; ++j)
         {
             f_vec[3 * M_ + 2 * N_ + j] = -params_.sideB[j].supply_decay * B_s[j];
-         
         }
     }
-    
+
     std::vector<double> IMEXSolver::explicit_rk2_step(const std::vector<double> &y_n, double dt) const
     {
         std::vector<double> f_n, g_n;
