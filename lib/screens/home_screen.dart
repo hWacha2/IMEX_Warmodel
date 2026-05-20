@@ -2,7 +2,6 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../providers/statemanager.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
-import 'dart:io';
 import 'package:video_player/video_player.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _initVideo() async {
     _controller =
-        VideoPlayerController.file(File("assets/videos/bg-anim3.mp4"));
+        VideoPlayerController.asset("assets/videos/bg-anim3.mp4");
 
     await _controller!.initialize();
     _controller!.setVolume(0.0);
