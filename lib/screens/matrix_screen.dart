@@ -68,58 +68,67 @@ class MatrixScreen extends StatelessWidget {
                       LayoutBuilder(
                         builder: (context, constraints) {
                           final isNarrow = constraints.maxWidth < 700;
-                
+
                           if (isNarrow) {
                             // ✅ ВЕРТИКАЛЬНЫЙ РЕЖИМ: все матрицы в одном потоке
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Большая матрица: A vs B
-                                _buildUnitMatrix(context, provider, true),
-                                const SizedBox(height: 24),
-                
-                                // Большая матрица: B vs A
-                                _buildUnitMatrix(context, provider, false),
-                
-                                // Малая матрица тегов (если есть)
-                                if (tags.length >= 2) ...[
+                            return IntrinsicWidth(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Большая матрица: A vs B
+                                  _buildUnitMatrixVertical(
+                                      context, provider, true),
                                   const SizedBox(height: 24),
-                                  const Divider(),
-                                  const SizedBox(height: 24),
-                                  _buildTagMatrixSection(context, provider, tags),
+
+                                  // Большая матрица: B vs A
+                                  _buildUnitMatrixVertical(
+                                      context, provider, false),
+
+                                  // Малая матрица тегов (если есть)
+                                  if (tags.length >= 2) ...[
+                                    const SizedBox(height: 24),
+                                    const Divider(),
+                                    const SizedBox(height: 24),
+                                    _buildTagMatrixSection(
+                                        context, provider, tags),
+                                  ],
                                 ],
-                              ],
+                              ),
                             );
                           } else {
                             // ✅ ГОРИЗОНТАЛЬНЫЙ РЕЖИМ: две большие рядом + малая ниже
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Две большие матрицы в фиксированной области
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    minHeight: 300,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                          child: _buildUnitMatrix(
-                                              context, provider, true)),
-                                      const SizedBox(width: 32),
-                                      Expanded(
-                                          child: _buildUnitMatrix(
-                                              context, provider, false)),
-                                    ],
-                                  ),
+                                // ✅ Две матрицы: без IntrinsicHeight, с Flexible
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment
+                                      .start, // ← start вместо stretch
+                                  children: [
+                                    Flexible(
+                                      // ← Flexible вместо Expanded
+                                      flex: 1,
+                                      fit: FlexFit
+                                          .loose, // ← позволяет сжиматься по контенту
+                                      child: _buildUnitMatrixHorizontal(
+                                          context, provider, true),
+                                    ),
+                                    const SizedBox(width: 32),
+                                    Flexible(
+                                      flex: 1,
+                                      fit: FlexFit.loose,
+                                      child: _buildUnitMatrixHorizontal(
+                                          context, provider, false),
+                                    ),
+                                  ],
                                 ),
                                 // Малая матрица тегов ниже (если есть)
                                 if (tags.length >= 2) ...[
                                   const SizedBox(height: 24),
-                
                                   const Divider(),
-                                   const SizedBox(height: 24),
-                
-                                  _buildTagMatrixSection(context, provider, tags),
+                                  const SizedBox(height: 24),
+                                  _buildTagMatrixSection(
+                                      context, provider, tags),
                                 ],
                               ],
                             );
@@ -176,13 +185,22 @@ class MatrixScreen extends StatelessWidget {
               const SizedBox(width: 16),
 
               // InfoBar занимает оставшееся пространство
-              const Expanded(
+              // InfoBar с иконкой-подсказкой вместо длинного текста
+              Expanded(
                 child: InfoBar(
-                  title: Text('Справка'),
-                  content: Text(
-                    'Маленькая матрица задаёт базовые значения по типам войск. '
-                    'Большая матрица может быть отредактирована вручную для точной настройки.',
+                  title: const Text('Справка'),
+                  content: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Маленькая матрица задаёт значения по типам войск.',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                    ],
                   ),
+                  severity: InfoBarSeverity.info,
                 ),
               ),
             ],
@@ -201,38 +219,25 @@ class MatrixScreen extends StatelessWidget {
     StateManager provider,
     List<String> tags,
   ) {
-    return  Padding(
-        padding: const EdgeInsets.all(0.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-           
+    return Padding(
+      padding: const EdgeInsets.all(0.0),
+      child: EffectivenessMatrix(
+        matrix: _buildTagMatrixData(provider, tags),
+        rowNames: tags,
+        columnNames: tags,
+        title: 'Матрица по типам войск',
+        onCellChanged: (row, col, value) {
+          final attackerTag = tags[row];
+          final defenderTag = tags[col];
 
-            // Горизонтальный скролл для широкой матрицы тегов
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: EffectivenessMatrix(
-                
-                matrix: _buildTagMatrixData(provider, tags),
-                rowNames: tags,
-                columnNames: tags,
-                title: 'Матрица по типам войск',
-                onCellChanged: (row, col, value) {
-                  final attackerTag = tags[row];
-                  final defenderTag = tags[col];
-
-                  // ✅ Обновляем ОБЕ матрицы тегов одинаковым значением:
-                  provider.updateTagAvsBCell(
-                      attackerTag, defenderTag, value); // для A→B
-                  provider.updateTagBvsACell(
-                      attackerTag, defenderTag, value); // для B→A
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    
+          // ✅ Обновляем ОБЕ матрицы тегов одинаковым значением:
+          provider.updateTagAvsBCell(
+              attackerTag, defenderTag, value); // для A→B
+          provider.updateTagBvsACell(
+              attackerTag, defenderTag, value); // для B→A
+        },
+      ),
+    );
   }
 
   /// Вспомогательный метод: преобразует Map тегов в 2D-список
@@ -250,19 +255,16 @@ class MatrixScreen extends StatelessWidget {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // Большая матрица по юнитам (хелпер)
+  // Большая матрица по юнитам для ВЕРТИКАЛЬНОГО режима
   // ─────────────────────────────────────────────────────────────
 
-  Widget _buildUnitMatrix(
+  Widget _buildUnitMatrixVertical(
     BuildContext context,
     StateManager provider,
     bool isAvsB,
   ) {
-    // ✅ Адаптивный aspectRatio для узких экранов
-    final isNarrow = MediaQuery.of(context).size.width < 700;
-
-    return AspectRatio(
-      aspectRatio: isNarrow ? 1.3 : 1.0,
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
       child: EffectivenessMatrix(
         matrix:
             isAvsB ? provider.effectivenessAvsB : provider.effectivenessBvsA,
@@ -280,6 +282,41 @@ class MatrixScreen extends StatelessWidget {
             provider.updateBvsACell(row, col, value);
           }
         },
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Большая матрица по юнитам для ГОРИЗОНТАЛЬНОГО режима
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _buildUnitMatrixHorizontal(
+    BuildContext context,
+    StateManager provider,
+    bool isAvsB,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: SizedBox(
+        width: double.infinity,
+        child: EffectivenessMatrix(
+          matrix:
+              isAvsB ? provider.effectivenessAvsB : provider.effectivenessBvsA,
+          rowNames: isAvsB
+              ? provider.sideA.map((u) => '${u.name} (${u.tag})').toList()
+              : provider.sideB.map((u) => '${u.name} (${u.tag})').toList(),
+          columnNames: isAvsB
+              ? provider.sideB.map((u) => '${u.name} (${u.tag})').toList()
+              : provider.sideA.map((u) => '${u.name} (${u.tag})').toList(),
+          title: isAvsB ? 'A vs B (по отрядам)' : 'B vs A (по отрядам)',
+          onCellChanged: (row, col, value) {
+            if (isAvsB) {
+              provider.updateAvsBCell(row, col, value);
+            } else {
+              provider.updateBvsACell(row, col, value);
+            }
+          },
+        ),
       ),
     );
   }

@@ -5,14 +5,12 @@ import 'package:flutter/widgets.dart';
 class AdaptiveBreakpoints {
   static const double compact = 1000;
   static const double medium = 1440;
-  static const double wide = 1920;
-  static const double ultraWide = 2560;
+
 
   static AdaptiveMode of(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (width < compact) return AdaptiveMode.compact;
     if (width < medium) return AdaptiveMode.medium;
-    if (width < wide) return AdaptiveMode.wide;
     return AdaptiveMode.ultraWide;
   }
 

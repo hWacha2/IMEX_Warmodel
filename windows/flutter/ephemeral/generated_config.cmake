@@ -15,10 +15,10 @@ list(APPEND FLUTTER_TOOL_ENVIRONMENT
   "FLUTTER_ROOT=C:\\Users\\hWacha\\develop\\flutter"
   "FLUTTER_EPHEMERAL_DIR=F:\\Documents\\uchebnoe 2\\diplom\\warmodel_2\\windows\\flutter\\ephemeral"
   "PROJECT_DIR=F:\\Documents\\uchebnoe 2\\diplom\\warmodel_2"
-  "FLUTTER_TARGET=F:\\Documents\\uchebnoe 2\\diplom\\warmodel_2\\lib\\main.dart"
+  "FLUTTER_TARGET=lib\\main.dart"
   "DART_DEFINES=RkxVVFRFUl9WRVJTSU9OPTMuNDEuNg==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049ZGI1MGUyMDE2OA==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049NDI1Y2ZiNTRkMA==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMS40"
   "DART_OBFUSCATION=false"
   "TRACK_WIDGET_CREATION=true"
-  "TREE_SHAKE_ICONS=false"
+  "TREE_SHAKE_ICONS=true"
   "PACKAGE_CONFIG=F:\\Documents\\uchebnoe 2\\diplom\\warmodel_2\\.dart_tool\\package_config.json"
 )
