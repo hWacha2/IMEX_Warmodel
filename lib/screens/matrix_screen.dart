@@ -1,3 +1,4 @@
+// lib/screens/matrix_screen.dart
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 import '../providers/statemanager.dart';
@@ -11,170 +12,267 @@ class MatrixScreen extends StatelessWidget {
     final provider = context.watch<StateManager>();
     final m = provider.sideA.length;
     final n = provider.sideB.length;
+    final tags = provider.tags;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // === НЕСКРОЛЛИРУЕМАЯ ШАПКА ===
           const Text(
             'Матрицы эффективности',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Настройте базовые значения по типам войск, затем при необходимости отредактируйте конкретные отряды',
+            style: TextStyle(
+              color: FluentTheme.of(context).inactiveColor,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 16),
-          if (m == 0 || n == 0) ...[
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+          // === ВСЁ ДАЛЬШЕ — В СКРОЛЛЕ ===
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (m == 0 || n == 0) ...[
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              FluentIcons.view_all,
+                              size: 64,
+                              color: FluentTheme.of(context).inactiveColor,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Добавьте типы войск для обеих сторон',
+                              style: TextStyle(
+                                color: FluentTheme.of(context).inactiveColor,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      // === АДАПТИВНАЯ КОМПОНОВКА МАТРИЦ ===
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 700;
+                
+                          if (isNarrow) {
+                            // ✅ ВЕРТИКАЛЬНЫЙ РЕЖИМ: все матрицы в одном потоке
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Большая матрица: A vs B
+                                _buildUnitMatrix(context, provider, true),
+                                const SizedBox(height: 24),
+                
+                                // Большая матрица: B vs A
+                                _buildUnitMatrix(context, provider, false),
+                
+                                // Малая матрица тегов (если есть)
+                                if (tags.length >= 2) ...[
+                                  const SizedBox(height: 24),
+                                  const Divider(),
+                                  const SizedBox(height: 24),
+                                  _buildTagMatrixSection(context, provider, tags),
+                                ],
+                              ],
+                            );
+                          } else {
+                            // ✅ ГОРИЗОНТАЛЬНЫЙ РЕЖИМ: две большие рядом + малая ниже
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Две большие матрицы в фиксированной области
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    minHeight: 300,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                          child: _buildUnitMatrix(
+                                              context, provider, true)),
+                                      const SizedBox(width: 32),
+                                      Expanded(
+                                          child: _buildUnitMatrix(
+                                              context, provider, false)),
+                                    ],
+                                  ),
+                                ),
+                                // Малая матрица тегов ниже (если есть)
+                                if (tags.length >= 2) ...[
+                                  const SizedBox(height: 24),
+                
+                                  const Divider(),
+                                   const SizedBox(height: 24),
+                
+                                  _buildTagMatrixSection(context, provider, tags),
+                                ],
+                              ],
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // === КНОПКИ ===
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Кнопки
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    FluentIcons.view_all,
-                    size: 64,
-                    color: FluentTheme.of(context).inactiveColor,
+                  Button(
+                    onPressed: (m > 0 && n > 0 && tags.length > 1)
+                        ? () => _syncFromTags(context, provider)
+                        : null,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(FluentIcons.sync),
+                        SizedBox(width: 8),
+                        Text('Применить матрицу по типам'),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Добавьте типы войск для обеих сторон',
-                    style: TextStyle(
-                      color: FluentTheme.of(context).inactiveColor,
-                      fontSize: 16,
+                  Button(
+                    onPressed: (m > 0 && n > 0)
+                        ? () => _resetMatrices(context, provider)
+                        : null,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(FluentIcons.refresh),
+                        SizedBox(width: 8),
+                        Text('Сбросить'),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ] else ...[
-            // ✅ АДАПТИВНАЯ КОМПОНОВКА: горизонтально на широких, вертикально на узких
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Порог переключения: 900px (можно настроить)
-                  final isNarrow = constraints.maxWidth < 600;
 
-                  return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 100),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  layoutBuilder: (currentChild, previousChildren) {
-                    return Stack(
-                      children: [
-                        ...previousChildren,
-                        if (currentChild != null) currentChild,
-                      ],
-                    );
-                  },
-                  transitionBuilder: (child, animation) {
-                    final fade = CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    );
+              const SizedBox(width: 16),
 
-                    final scale = Tween<double>(
-                      begin: 0.97,
-                      end: 1.0,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    ));
+              // InfoBar занимает оставшееся пространство
+              const Expanded(
+                child: InfoBar(
+                  title: Text('Справка'),
+                  content: Text(
+                    'Маленькая матрица задаёт базовые значения по типам войск. '
+                    'Большая матрица может быть отредактирована вручную для точной настройки.',
+                  ),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
 
-                    final slide = Tween<Offset>(
-                      begin: const Offset(0, 0.01),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    ));
+  // ─────────────────────────────────────────────────────────────
+  // Маленькая матрица по тегам
+  // ─────────────────────────────────────────────────────────────
 
-                    return FadeTransition(
-                      opacity: fade,
-                      child: SlideTransition(
-                        position: slide,
-                        child: ScaleTransition(
-                          scale: scale,
-                          child: child,
-                        ),
-                      ),
-                    );
-                  },
-                  
-                  child: isNarrow
-                      ? _buildVerticalLayout(context, provider)
-                      : _buildHorizontalLayout(context, provider),
-                );
+  Widget _buildTagMatrixSection(
+    BuildContext context,
+    StateManager provider,
+    List<String> tags,
+  ) {
+    return  Padding(
+        padding: const EdgeInsets.all(0.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+           
 
+            // Горизонтальный скролл для широкой матрицы тегов
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: EffectivenessMatrix(
+                
+                matrix: _buildTagMatrixData(provider, tags),
+                rowNames: tags,
+                columnNames: tags,
+                title: 'Матрица по типам войск',
+                onCellChanged: (row, col, value) {
+                  final attackerTag = tags[row];
+                  final defenderTag = tags[col];
 
-                  
+                  // ✅ Обновляем ОБЕ матрицы тегов одинаковым значением:
+                  provider.updateTagAvsBCell(
+                      attackerTag, defenderTag, value); // для A→B
+                  provider.updateTagBvsACell(
+                      attackerTag, defenderTag, value); // для B→A
                 },
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          const InfoBar(
-            title: Text('Справка'),
-            content: Text(
-              'Матрица показывает эффективность атаки типа войск строки против типа войск столбца. '
-              'Значение > 1 означает повышенную эффективность, < 1 — пониженную.',
-            ),
-          ),
-          const SizedBox(height: 16),
-          Button(
-            onPressed: (m > 0 && n > 0) ? () => _resetMatrices(context) : null,
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(FluentIcons.refresh),
-                SizedBox(width: 8),
-                Text('Сбросить матрицы'),
-              ],
-            ),
-          ),
-        ],
+        ),
+      );
+    
+  }
+
+  /// Вспомогательный метод: преобразует Map тегов в 2D-список
+  List<List<double>> _buildTagMatrixData(
+    StateManager provider,
+    List<String> tags,
+  ) {
+    return List<List<double>>.generate(
+      tags.length,
+      (i) => List.generate(
+        tags.length,
+        (j) => provider.tagEffectivenessAvsB[tags[i]]?[tags[j]] ?? 1.0,
       ),
     );
   }
 
-    Widget _buildVerticalLayout(BuildContext context, StateManager provider) {
-    return SingleChildScrollView(
-      key: const ValueKey('vertical'),
-      child: Column(
-        children: [
-          _buildSingleMatrix(context, provider, true),
-          const SizedBox(height: 24),
-          _buildSingleMatrix(context, provider, false),
-        ],
-      ),
-    );
-  }
+  // ─────────────────────────────────────────────────────────────
+  // Большая матрица по юнитам (хелпер)
+  // ─────────────────────────────────────────────────────────────
 
-  Widget _buildHorizontalLayout(BuildContext context, StateManager provider) {
-    return Row(
-      key: const ValueKey('horizontal'),
-      children: [
-        Expanded(child: _buildSingleMatrix(context, provider, true)),
-        const SizedBox(width: 32),
-        Expanded(child: _buildSingleMatrix(context, provider, false)),
-      ],
-    );
-  }
-
-  // ✅ Хелпер для отрисовки одной матрицы
-  Widget _buildSingleMatrix(
+  Widget _buildUnitMatrix(
     BuildContext context,
     StateManager provider,
     bool isAvsB,
   ) {
+    // ✅ Адаптивный aspectRatio для узких экранов
+    final isNarrow = MediaQuery.of(context).size.width < 700;
+
     return AspectRatio(
-      aspectRatio: 1, // ← делает область квадратной
+      aspectRatio: isNarrow ? 1.3 : 1.0,
       child: EffectivenessMatrix(
         matrix:
             isAvsB ? provider.effectivenessAvsB : provider.effectivenessBvsA,
         rowNames: isAvsB
-            ? provider.sideA.map((u) => u.name).toList()
-            : provider.sideB.map((u) => u.name).toList(),
+            ? provider.sideA.map((u) => '${u.name} (${u.tag})').toList()
+            : provider.sideB.map((u) => '${u.name} (${u.tag})').toList(),
         columnNames: isAvsB
-            ? provider.sideB.map((u) => u.name).toList()
-            : provider.sideA.map((u) => u.name).toList(),
-        title: isAvsB ? 'A vs B' : 'B vs A',
+            ? provider.sideB.map((u) => '${u.name} (${u.tag})').toList()
+            : provider.sideA.map((u) => '${u.name} (${u.tag})').toList(),
+        title: isAvsB ? 'A vs B (по отрядам)' : 'B vs A (по отрядам)',
         onCellChanged: (row, col, value) {
           if (isAvsB) {
             provider.updateAvsBCell(row, col, value);
@@ -186,33 +284,46 @@ class MatrixScreen extends StatelessWidget {
     );
   }
 
-  void _resetMatrices(BuildContext context) {
+  // ─────────────────────────────────────────────────────────────
+  // Кнопки управления
+  // ─────────────────────────────────────────────────────────────
+
+  /// Синхронизирует полную матрицу с матрицей по тегам
+  void _syncFromTags(BuildContext context, StateManager provider) {
+    provider.syncEffectivenessFromTags();
+    _showNotification(
+        context, 'Матрица по отрядам обновлена значениями из матрицы по типам');
+  }
+
+  /// Сбрасывает матрицы к значениям по умолчанию
+  void _resetMatrices(BuildContext context, StateManager provider) {
     showDialog(
       context: context,
       builder: (context) => ContentDialog(
         title: const Text('Сброс матриц'),
         content: const Text(
-          'Вы уверены, что хотите сбросить все значения матриц эффективности к 1.0?',
+          'Сбросить все значения матриц эффективности к 1.0?',
         ),
         actions: [
           Button(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Отмена'),
+          ),
+          Button(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<StateManager>().resetEffectivenessMatrices();
+              provider.resetEffectivenessMatrices();
               _showNotification(
                   context, 'Матрицы сброшены к значениям по умолчанию');
             },
             child: const Text('Сбросить'),
-          ),
-          Button(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Отмена'),
           ),
         ],
       ),
     );
   }
 
+  /// Показывает уведомление
   void _showNotification(BuildContext context, String message) {
     displayInfoBar(
       context,

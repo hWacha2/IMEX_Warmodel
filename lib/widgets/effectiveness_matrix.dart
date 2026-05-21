@@ -1,7 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'matrix_cell.dart';
 
-/// Виджет матрицы эффективности с точным выравниванием через Table
 class EffectivenessMatrix extends StatelessWidget {
   final List<List<double>> matrix;
   final List<String> rowNames;
@@ -9,10 +8,10 @@ class EffectivenessMatrix extends StatelessWidget {
   final String title;
   final Function(int, int, double) onCellChanged;
 
-  // ✅ Фиксированные размеры для точного выравнивания
-  static const double _headerWidth = 120.0;  // Ширина заголовков строк
-  static const double _cellWidth = 80.0;     // Ширина ячейки
-  static const double _cellHeight = 40.0;    // Высота ячейки
+  // ✅ Ограничения для контента ячеек
+  static const double _headerMaxWidth = 110.0;
+  static const double _cellMaxWidth = 80.0;
+  static const double _cellMinHeight = 40.0;
 
   const EffectivenessMatrix({
     super.key,
@@ -33,16 +32,15 @@ class EffectivenessMatrix extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            // ✅ Горизонтальный скролл для широких матриц
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: _buildMatrixTable(context),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 800),
+                child: _buildMatrixTable(context),
+              ),
             ),
           ],
         ),
@@ -52,74 +50,80 @@ class EffectivenessMatrix extends StatelessWidget {
 
   Widget _buildMatrixTable(BuildContext context) {
     return Table(
-      // ✅ Фиксированная ширина колонок — гарантия выравнивания
+      // ✅ IntrinsicColumnWidth() без параметров — ширина по контенту
       columnWidths: {
-        0: const FixedColumnWidth(_headerWidth), // Заголовки строк
+        0: const FixedColumnWidth(_headerMaxWidth),
         for (var i = 0; i < columnNames.length; i++)
-          i + 1: const FixedColumnWidth(_cellWidth), // Ячейки данных
+          i + 1: const FixedColumnWidth(_cellMaxWidth),
       },
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+
+      defaultVerticalAlignment: TableCellVerticalAlignment.top,
       children: [
-        // 🔹 Заголовок таблицы (названия столбцов)
+        // 🔹 Заголовки столбцов
         TableRow(
           children: [
-            // Пустая ячейка в левом верхнем углу
             const SizedBox.shrink(),
-            ...columnNames.map((name) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: SizedBox(
-                height: _cellHeight,
-                child: Text(
-                  name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+            ...columnNames.map((name) => _buildConstrainedCell(
+                  child: Text(
+                    name,
+                    softWrap: true,
+                    maxLines: null,
+                    overflow: TextOverflow.visible,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13),
                   ),
-                  overflow: TextOverflow.ellipsis, // ✅ Обрезаем длинные названия
-                ),
-              ),
-            )),
+                  isHeader: true,
+                )),
           ],
         ),
-        
+
         // 🔹 Строки матрицы
         ...matrix.asMap().entries.map((rowEntry) => TableRow(
-          children: [
-            // Заголовок строки (название типа войск)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: SizedBox(
-                height: _cellHeight,
-                child: Text(
-                  
-                  rowNames[rowEntry.key],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
+              children: [
+                // Заголовок строки
+                _buildConstrainedCell(
+                  child: Text(
+                    rowNames[rowEntry.key],
+                    softWrap: true,
+                    maxLines: null,
+                    overflow: TextOverflow.visible,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 13),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  isHeader: true,
                 ),
-              ),
-            ),
-            // Ячейки строки
-            ...rowEntry.value.asMap().entries.map((cellEntry) => Padding(
-              padding: const EdgeInsets.all(2.0), // ✅ Минимальный отступ
-              child: SizedBox(
-                height: _cellHeight,
-                child: MatrixCell(
-                  value: cellEntry.value,
-                  onChanged: (value) => onCellChanged(
-                    rowEntry.key, 
-                    cellEntry.key, 
-                    value,
-                  ),
-                ),
-              ),
+                // Ячейки с данными
+                ...rowEntry.value.asMap().entries.map((cellEntry) => Padding(
+                      padding: const EdgeInsets.all(2.0),
+                      child: MatrixCell(
+                        value: cellEntry.value,
+                        onChanged: (value) => onCellChanged(
+                          rowEntry.key,
+                          cellEntry.key,
+                          value,
+                        ),
+                      ),
+                    )),
+              ],
             )),
-          ],
-        )),
       ],
+    );
+  }
+
+  Widget _buildConstrainedCell({
+    required Widget child,
+    required bool isHeader,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: _cellMinHeight,
+        ),
+        child: child,
+      ),
     );
   }
 }

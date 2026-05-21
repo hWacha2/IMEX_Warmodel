@@ -1,6 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:provider/provider.dart'; // ← Обязательно!
+import '../providers/statemanager.dart';
 import '../models/unit_type.dart';
 import 'confirm_dialog.dart';
+import '../widgets/tag_manager_dialog.dart'; // ← Обязательно!// из lib/widgets/unit_card.dart
 
 /// Карточка типа войск для отображения и редактирования
 class UnitCard extends StatefulWidget {
@@ -41,22 +44,63 @@ class _UnitCardState extends State<UnitCard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: sideColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      widget.unit.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        // Цвет стороны
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: sideColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        // Имя отряда
+                        Text(
+                          widget.unit.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        // Тег (всегда показываем)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: FluentTheme.of(context)
+                                .resources
+                                .cardBackgroundFillColorDefault,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                FluentIcons.tag,
+                                size: 14,
+                                color: FluentTheme.of(context).accentColor,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                widget.unit.tag,
+                                style: TextStyle(
+                                  color: FluentTheme.of(context).accentColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -106,41 +150,6 @@ class _UnitCardState extends State<UnitCard> {
                       'Чувств. к снабжению:',
                       widget.unit.cpSupplySensitivity.toStringAsFixed(2),
                       context),
-
-                  // === Отображение тегов ===
-                  if (widget.unit.isUav || widget.unit.isFpv) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: FluentTheme.of(context)
-                            .resources
-                            .cardBackgroundFillColorDefault,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            widget.unit.isUav
-                                ? FluentIcons.airplane
-                                : FluentIcons.rocket,
-                            size: 16,
-                            color: FluentTheme.of(context).accentColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.unit.isUav
-                                ? 'БПЛА'
-                                : 'FPV-дрон',
-                            style: TextStyle(
-                              color: FluentTheme.of(context).accentColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -202,6 +211,7 @@ class _UnitCardState extends State<UnitCard> {
     );
   }
 }
+
 /// Диалог редактирования типа войск
 class _EditUnitDialog extends StatefulWidget {
   final UnitType unit;
@@ -217,6 +227,7 @@ class _EditUnitDialog extends StatefulWidget {
 }
 
 class _EditUnitDialogState extends State<_EditUnitDialog> {
+  // Контроллеры полей
   late TextEditingController _nameController;
   late TextEditingController _countController;
   late TextEditingController _combatPowerController;
@@ -227,9 +238,8 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
   late TextEditingController _supplyDecayController;
   late TextEditingController _cpSupplySensController;
 
-  // === Флаги для БПЛА/FPV ===
-  late bool _isUav;
-  late bool _isFpv;
+  // ← НОВОЕ: Выбранный тег (вместо отдельных флагов)
+  late String _selectedTag;
 
   @override
   void initState() {
@@ -252,36 +262,40 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
     _cpSupplySensController =
         TextEditingController(text: widget.unit.cpSupplySensitivity.toString());
 
-    // === Инициализация флагов ===
-    _isUav = widget.unit.isUav;
-    _isFpv = widget.unit.isFpv;
+    // ← Инициализируем выбранный тег из юнита
+    _selectedTag = widget.unit.tag.isEmpty ? 'пехота' : widget.unit.tag;
 
-    _applyDroneLogic();
+    // Применяем дефолты в зависимости от тега
+    _applyTagDefaults(_selectedTag);
   }
 
-  // Применяет логику блокировки полей в зависимости от типа дрона
-  void _applyDroneLogic() {
-    // 1. Мораль и её затухание фиксированы для всех дронов
-    if (_isUav || _isFpv) {
+  // ← НОВОЕ: Применяет дефолтные значения в зависимости от тега
+  void _applyTagDefaults(String tag) {
+    final lowerTag = tag.toLowerCase();
+
+    if (lowerTag == 'бпла' || lowerTag == 'uav' || lowerTag == 'дрон') {
+      // БПЛА: фиксированные параметры
       _moraleController.text = '1.0';
       _moraleDecayController.text = '0.0';
-    }
-
-    // 2. Защита фиксирована на 1.0 для всех дронов
-    if (_isUav || _isFpv) {
-      _defenseController.text = '1.0';
-    }
-
-    // 3. Боевая мощь фиксирована на 0.0 для разведывательных БПЛА
-    if (_isUav) {
       _combatPowerController.text = '0.0';
-    }
-
-    // 4. Снабжение и его затухание фиксированы для FPV
-    if (_isFpv) {
+      _defenseController.text = '1.0';
+      if (_cpSupplySensController.text == '0.0') {
+        _cpSupplySensController.text = '0.5';
+      }
+    } else if (lowerTag == 'фпв' || lowerTag == 'fpv') {
+      // FPV: фиксированные параметры
+      _moraleController.text = '1.0';
+      _moraleDecayController.text = '0.0';
+      _defenseController.text = '1.0';
       _supplyController.text = '1.0';
       _supplyDecayController.text = '0.0';
+      _cpSupplySensController.text = '0.0';
+      if (_combatPowerController.text.isEmpty ||
+          double.tryParse(_combatPowerController.text) == 0.0) {
+        _combatPowerController.text = '0.8';
+      }
     }
+    // Для 'пехота' и других тегов оставляем значения как есть
   }
 
   @override
@@ -298,35 +312,17 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
     super.dispose();
   }
 
-  // === Методы для управления флагами ===
-  void _setUav(bool value) {
-    setState(() {
-      _isUav = value;
-      if (value) {
-        _isFpv = false;
-      }
-      _applyDroneLogic();
-    });
-  }
-
-  void _setFpv(bool value) {
-    setState(() {
-      _isFpv = value;
-      if (value) {
-        _isUav = false;
-      }
-      _applyDroneLogic();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isDrone = _isUav || _isFpv;
-    final isFpvOnly = _isFpv;
-    final isUavOnly = _isUav;
+    final isDrone = _isSpecialTag(_selectedTag);
+    final isFpvTag = _isFpvTagValue(_selectedTag);
+    final isUavTag = _isUavTagValue(_selectedTag);
+
+    const accentColor = Color(0xFF448AFF);
+    final accentColorFaded = accentColor.withValues(alpha: 0.8);
 
     return ContentDialog(
-      title: const Text('Редактирование типа войск'),
+      title: const Text('Редактирование отряда'),
       content: SizedBox(
         width: 500,
         child: SingleChildScrollView(
@@ -334,56 +330,140 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Название
-              const Text('Название', style: TextStyle(fontWeight: FontWeight.w500)),
+              // ← НОВОЕ: Выбор тега с иконкой и кнопкой управления
+              const Text('Тип войск',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Consumer<StateManager>(
+                      builder: (context, provider, _) {
+                        return ComboBox<String>(
+                          value: _selectedTag,
+                          items: provider.tags
+                              .map((tag) => ComboBoxItem<String>(
+                                    value: tag,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(FluentIcons.tag, size: 14),
+                                        const SizedBox(width: 4),
+                                        Text(tag),
+                                      ],
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (tag) {
+                            if (tag != null) {
+                              setState(() {
+                                _selectedTag = tag;
+                                _applyTagDefaults(tag);
+                              });
+                            }
+                          },
+                          selectedItemBuilder: (context) {
+                            return provider.tags.map((tag) {
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(FluentIcons.tag, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(tag),
+                                ],
+                              );
+                            }).toList();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Управление типами войск',
+                    child: IconButton(
+                      icon: const Icon(FluentIcons.settings),
+                      onPressed: () {
+                        // ← Открываем менеджер тегов поверх, не закрывая этот диалог
+                        showDialog(
+                          context: context,
+                          builder: (_) => const TagManagerDialog(),
+                        ).then((_) {
+                          if (mounted) setState(() {});
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Название отряда
+              const Text('Название отряда',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               TextBox(
                 controller: _nameController,
-                placeholder: 'Название',
+                placeholder: 'например, "1-й батальон"',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Численность
-              const Text('Начальная численность', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Начальная численность',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               TextBox(
                 controller: _countController,
-                placeholder: 'Начальная численность',
+                placeholder: '0',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Боевая мощь
-              const Text('Боевая мощь (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Боевая мощь (0-1)',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
-              if (_isUav)
+              if (isUavTag)
                 TextBox(
                   controller: TextEditingController(text: '0.0'),
+                  placeholder: '0.0',
                   readOnly: true,
                   enabled: false,
                 )
               else
                 TextBox(
                   controller: _combatPowerController,
-                  placeholder: _isFpv ? '0.8' : '0.7',
+                  placeholder: isFpvTag ? '0.8' : '0.7',
                 ),
-              if (_isUav)
+              if (isUavTag)
                 Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 8),
+                  padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     'БПЛА не наносят прямого урона',
                     style: TextStyle(
                         fontSize: 12,
                         color: FluentTheme.of(context).inactiveColor),
                   ),
+                )
+              else if (isFpvTag)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'FPV-дроны наносят урон, но быстро расходуются',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: FluentTheme.of(context).inactiveColor),
+                  ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Защита
-              const Text('Защита (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Защита (0-1)',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               if (isDrone)
                 TextBox(
                   controller: TextEditingController(text: '1.0'),
+                  placeholder: '1.0',
                   readOnly: true,
                   enabled: false,
                 )
@@ -394,51 +474,21 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                 ),
               if (isDrone)
                 Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 8),
+                  padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    'Дроны исключены из матрицы потерь (защита 1.0)',
+                    'Защита дронов фиксирована',
                     style: TextStyle(
                         fontSize: 12,
                         color: FluentTheme.of(context).inactiveColor),
                   ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-              // Теги БПЛА/FPV
-              const Text('Тип подразделения', style: TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              InfoBar(
-                title: const Text('Специализированные средства'),
-                content: const Text(
-                  'БПЛА и FPV дроны имеют особую динамику: '
-                  'они не подвержены моральному фактору и исключены из огневой матрицы.',
-                ),
-                severity: InfoBarSeverity.info,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Checkbox(
-                      checked: _isUav,
-                      onChanged: (value) => _setUav(value ?? false),
-                      content: const Text('БПЛА'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Checkbox(
-                      checked: _isFpv,
-                      onChanged: (value) => _setFpv(value ?? false),
-                      content: const Text('FPV-дрон'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+              // ← УБРАНО: чекбоксы специализации (теперь это теги)
 
               // Мораль
-              const Text('Мораль (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Мораль (0-1)',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               Opacity(
                 opacity: isDrone ? 0.5 : 1.0,
@@ -457,19 +507,20 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                   child: Text(
                     'Мораль дронов фиксирована на 1.0',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: FluentTheme.of(context).inactiveColor,
-                    ),
+                        fontSize: 12,
+                        color: FluentTheme.of(context).inactiveColor),
                   ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Снабжение
-              const Text('Снабжение (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Снабжение (0-1)',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
-              if (isFpvOnly)
+              if (isFpvTag)
                 TextBox(
                   controller: TextEditingController(text: '1.0'),
+                  placeholder: '1.0',
                   readOnly: true,
                   enabled: false,
                 )
@@ -478,21 +529,21 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                   controller: _supplyController,
                   placeholder: '1.0',
                 ),
-              if (isFpvOnly)
+              if (isFpvTag)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    'Снабжение FPV фиксировано (расход через lambda_use)',
+                    'Снабжение FPV фиксировано',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: FluentTheme.of(context).inactiveColor,
-                    ),
+                        fontSize: 12,
+                        color: FluentTheme.of(context).inactiveColor),
                   ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Затухание морали
-              const Text('Затухание морали', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Затухание морали',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               Opacity(
                 opacity: isDrone ? 0.5 : 1.0,
@@ -505,14 +556,16 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Затухание снабжения
-              const Text('Затухание снабжения', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Затухание снабжения',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
-              if (isFpvOnly)
+              if (isFpvTag)
                 TextBox(
                   controller: TextEditingController(text: '0.0'),
+                  placeholder: '0.0',
                   readOnly: true,
                   enabled: false,
                 )
@@ -521,48 +574,50 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
                   controller: _supplyDecayController,
                   placeholder: '0.01',
                 ),
-              if (isFpvOnly)
+              if (isFpvTag)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     'Логистическое истощение для FPV отключено',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: FluentTheme.of(context).inactiveColor,
-                    ),
+                        fontSize: 12,
+                        color: FluentTheme.of(context).inactiveColor),
                   ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Чувствительность к снабжению
-              const Text('Чувствительность к снабжению (0-1)', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Чувствительность к снабжению (0-1)',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
-              if (isFpvOnly)
+              if (isFpvTag)
                 TextBox(
                   controller: TextEditingController(text: '0.0'),
+                  placeholder: '0.0',
                   readOnly: true,
                   enabled: false,
                 )
               else
                 TextBox(
                   controller: _cpSupplySensController,
-                  placeholder: isUavOnly ? '0.5' : '0.3',
+                  placeholder: isUavTag ? '0.5' : '0.3',
                 ),
               const SizedBox(height: 4),
-              // Динамическая подсказка
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  isFpvOnly
-                      ? 'Для FPV-дронов параметр неактивен (равен 0).'
-                      : isUavOnly
-                          ? 'Влияет на эффективность разведки: чем выше, тем сильнее падает активность БПЛА при потере снабжения.'
+                  isFpvTag
+                      ? 'Для FPV-дронов параметр неактивен.'
+                      : isUavTag
+                          ? 'Влияет на эффективность разведки.'
                           : 'Насколько сильно падение снабжения снижает боевую мощь.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isFpvOnly 
-                        ? FluentTheme.of(context).inactiveColor 
-                        : (isUavOnly ? const Color(0xFF448AFF).withValues(alpha: 0.8) : FluentTheme.of(context).inactiveColor),
+                    color: isFpvTag
+                        ? FluentTheme.of(context).inactiveColor
+                        : (isUavTag
+                            ? accentColorFaded
+                            : FluentTheme.of(context).inactiveColor),
                   ),
                 ),
               ),
@@ -584,39 +639,52 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
     );
   }
 
+  // ← Вспомогательные методы для проверки тега
+  bool _isSpecialTag(String tag) {
+    final lower = tag.toLowerCase();
+    return lower == 'бпла' ||
+        lower == 'uav' ||
+        lower == 'дрон' ||
+        lower == 'фпв' ||
+        lower == 'fpv';
+  }
+
+  bool _isUavTagValue(String tag) {
+    final lower = tag.toLowerCase();
+    return lower == 'бпла' || lower == 'uav' || lower == 'дрон';
+  }
+
+  bool _isFpvTagValue(String tag) {
+    final lower = tag.toLowerCase();
+    return lower == 'фпв' || lower == 'fpv';
+  }
+
   void _saveChanges() {
-    // === Принудительная установка значений для дронов ===
+    final tag = _selectedTag.isEmpty ? 'пехота' : _selectedTag;
 
-    // 1. Мораль и её затухание
-    final effectiveMorale = (_isUav || _isFpv)
-        ? 1.0
-        : (double.tryParse(_moraleController.text) ?? 1.0);
-    final effectiveMoraleDecay = (_isUav || _isFpv)
-        ? 0.0
-        : (double.tryParse(_moraleDecayController.text) ?? 0.01);
+    // ← Определяем флаги на основе тега
+    final isUav = _isUavTagValue(tag);
+    final isFpv = _isFpvTagValue(tag);
+    final isDrone = isUav || isFpv;
 
-    // 2. Защита
-    final effectiveDefense = (_isUav || _isFpv)
-        ? 1.0
-        : (double.tryParse(_defenseController.text) ?? 1.0);
-
-    // 3. Боевая мощь
+    final effectiveMorale =
+        isDrone ? 1.0 : (double.tryParse(_moraleController.text) ?? 1.0);
+    final effectiveMoraleDecay =
+        isDrone ? 0.0 : (double.tryParse(_moraleDecayController.text) ?? 0.01);
     final effectiveCombatPower =
-        _isUav ? 0.0 : (double.tryParse(_combatPowerController.text) ?? 1.0);
-
-    // 4. Снабжение и его затухание
+        isUav ? 0.0 : (double.tryParse(_combatPowerController.text) ?? 1.0);
+    final effectiveDefense =
+        isDrone ? 1.0 : (double.tryParse(_defenseController.text) ?? 0.5);
     final effectiveSupply =
-        _isFpv ? 1.0 : (double.tryParse(_supplyController.text) ?? 1.0);
+        isFpv ? 1.0 : (double.tryParse(_supplyController.text) ?? 1.0);
     final effectiveSupplyDecay =
-        _isFpv ? 0.0 : (double.tryParse(_supplyDecayController.text) ?? 0.01);
-    
-    // 5. Чувствительность к снабжению
-    final effectiveCpSupplySens = _isFpv 
-        ? 0.0 
-        : (double.tryParse(_cpSupplySensController.text) ?? 0.3);
+        isFpv ? 0.0 : (double.tryParse(_supplyDecayController.text) ?? 0.01);
+    final effectiveCpSupplySens =
+        isFpv ? 0.0 : (double.tryParse(_cpSupplySensController.text) ?? 0.3);
 
     final updated = UnitType(
-      name: _nameController.text,
+      name: _nameController.text.trim().isEmpty ? tag : _nameController.text,
+      tag: tag, // ← Обновляем тег
       count: double.tryParse(_countController.text) ?? 0.0,
       combatPower: effectiveCombatPower,
       defense: effectiveDefense,
@@ -625,9 +693,10 @@ class _EditUnitDialogState extends State<_EditUnitDialog> {
       moraleDecay: effectiveMoraleDecay,
       supplyDecay: effectiveSupplyDecay,
       cpSupplySensitivity: effectiveCpSupplySens,
-      isUav: _isUav,
-      isFpv: _isFpv,
+      isUav: isUav, // ← Устанавливаем флаги на основе тега
+      isFpv: isFpv,
     );
+
     widget.onSave(updated);
   }
 }

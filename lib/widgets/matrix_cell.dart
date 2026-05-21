@@ -1,6 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-/// Ячейка матрицы эффективности
 class MatrixCell extends StatefulWidget {
   final double value;
   final ValueChanged<double> onChanged;
@@ -72,13 +71,10 @@ class _MatrixCellState extends State<MatrixCell> {
   @override
   Widget build(BuildContext context) {
     final theme = FluentTheme.of(context);
-    
+
     return Tooltip(
       message: widget.tooltip ?? 'Эффективность: ${widget.value}',
-      child: Container(
-        // ✅ Ячейка занимает всю доступную область родителя (Table)
-        width: double.infinity,
-        height: double.infinity,
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: widget.isHighlighted
               ? theme.accentColor.withValues(alpha: 0.1)
@@ -89,47 +85,55 @@ class _MatrixCellState extends State<MatrixCell> {
           ),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: _isEditing
-            ? TextBox(
-                controller: _controller,
-                focusNode: _focusNode,
-                textAlign: TextAlign.center,
-            
-                style: const TextStyle(fontSize: 13),
-                onChanged: (text) {
-                  final value = double.tryParse(text);
-                  if (value != null) widget.onChanged(value);
-                },
-                onSubmitted: (_) {
-                  final value = double.tryParse(_controller.text);
-                  if (value != null) widget.onChanged(value);
-                  setState(() {
-                    _isEditing = false;
-                    _controller.text = _formatValue(value ?? widget.value);
-                  });
-                  _focusNode.unfocus();
-                },
-              )
-            : GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  setState(() => _isEditing = true);
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) _focusNode.requestFocus();
-                  });
-                },
-                // ✅ Center гарантирует точное центрирование текста
-                child: Center(
-                  child: Text(
-                    _formatValue(widget.value),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _getValueColor(widget.value),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 60,
+            minHeight: 40,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: _isEditing
+                ? TextBox(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13),
+                    onChanged: (text) {
+                      final value = double.tryParse(text);
+                      if (value != null) widget.onChanged(value);
+                    },
+                    onSubmitted: (_) {
+                      final value = double.tryParse(_controller.text);
+                      if (value != null) widget.onChanged(value);
+                      setState(() {
+                        _isEditing = false;
+                        _controller.text = _formatValue(value ?? widget.value);
+                      });
+                      _focusNode.unfocus();
+                    },
+                  )
+                : GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      setState(() => _isEditing = true);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _focusNode.requestFocus();
+                      });
+                    },
+                    child: Center(
+                      child: Text(
+                        _formatValue(widget.value),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _getValueColor(widget.value),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+          ),
+        ),
       ),
     );
   }
