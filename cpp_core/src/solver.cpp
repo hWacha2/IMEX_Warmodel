@@ -212,20 +212,121 @@ namespace combat_model
         {
             for (size_t j = 0; j < N_; ++j)
             {
+             
+                if (params_.sideA[i].is_uav || params_.sideA[i].is_fpv || params_.sideB[j].is_fpv || params_.sideB[j].is_uav)
+                    continue; // БПЛА не получают урон от стандартного огня
                 // === Потери стороны A (тип i) от огня стороны B (тип j) ===
-                // Цель — тип i стороны A. Если это дрон — он не получает урон от стандартного огня
-                if (!params_.sideA[i].is_uav && !params_.sideA[i].is_fpv)
-                {
-                    g_vec[i] -= alpha_scaled_ * params_.effectivenessBvsA[j][i] *
+                g_vec[i] -= alpha_scaled_ * params_.effectivenessBvsA[j][i] *
                                 B_atk[j] * A_exp[i] * (1.0 - params_.sideA[i].defense);
+                // === Потери стороны B (тип j) от огня стороны A (тип i) ===
+                g_vec[M_ + j] -= beta_scaled_ * params_.effectivenessAvsB[i][j] *
+                                     A_atk[i] * B_exp[j] * (1.0 - params_.sideB[j].defense);
+            }
+        }
+
+        // === ОТДЕЛЬНЫЙ РАСЧЁТ УРОНА ОТ FPV-ДРОНОВ (через матрицу эффективности) ===
+
+        {
+            std::vector<size_t> fpv_indices_B;
+            for (size_t j = 0; j < N_; ++j)
+            {
+                if (params_.sideB[j].is_fpv)
+                {
+                    fpv_indices_B.push_back(j);
+                }
+            }
+
+            if (!fpv_indices_B.empty())
+            {
+                std::vector<size_t> valid_targets_A;
+                for (size_t i = 0; i < M_; ++i)
+                {
+                    if (!params_.sideA[i].is_uav && !params_.sideA[i].is_fpv)
+                    {
+                        valid_targets_A.push_back(i);
+                    }
                 }
 
-                // === Потери стороны B (тип j) от огня стороны A (тип i) ===
-                // Цель — тип j стороны B. Если это дрон — он не получает урон от стандартного огня
-                if (!params_.sideB[j].is_uav && !params_.sideB[j].is_fpv)
+                if (!valid_targets_A.empty())
                 {
-                    g_vec[M_ + j] -= beta_scaled_ * params_.effectivenessAvsB[i][j] *
-                                     A_atk[i] * B_exp[j] * (1.0 - params_.sideB[j].defense);
+                    for (size_t idx_j : fpv_indices_B)
+                    {
+                        double R_j = params_.lambda_use * B[idx_j]; // скорость расхода
+                        if (R_j > 1e-9)
+                        {
+                            // Коэффициент тактической концентрации (сигмоида насыщения)
+                            double eta_j = 1.0 + params_.k_burst * (R_j / (R_j + params_.R_half + 1e-9));
+
+                            // Вычислить веса целей: численность × уязвимость
+                            double total_weight = 0.0;
+                            for (size_t idx_i : valid_targets_A)
+                            {
+                                total_weight += A[idx_i] * (1.0 - params_.sideA[idx_i].defense);
+                            }
+                            total_weight = std::max(total_weight, 1e-9);
+
+                            // Применить урон пропорционально весам и матрице эффективности
+                            for (size_t idx_i : valid_targets_A)
+                            {
+                                double eff = params_.effectivenessBvsA[idx_j][idx_i]; // ← матрица эффективности
+                                double w = (A[idx_i] * (1.0 - params_.sideA[idx_i].defense)) / total_weight;
+                                // ← БЕЗ fpv_lethality: урон = alpha * eff * R * eta * w
+                                double damage =  eff * R_j * eta_j * w;
+                                g_vec[idx_i] -= damage;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Сторона A -> сторона B (симметрично) ---
+        {
+            std::vector<size_t> fpv_indices_A;
+            for (size_t i = 0; i < M_; ++i)
+            {
+                if (params_.sideA[i].is_fpv)
+                {
+                    fpv_indices_A.push_back(i);
+                }
+            }
+
+            if (!fpv_indices_A.empty())
+            {
+                std::vector<size_t> valid_targets_B;
+                for (size_t j = 0; j < N_; ++j)
+                {
+                    if (!params_.sideB[j].is_uav && !params_.sideB[j].is_fpv)
+                    {
+                        valid_targets_B.push_back(j);
+                    }
+                }
+
+                if (!valid_targets_B.empty())
+                {
+                    for (size_t idx_i : fpv_indices_A)
+                    {
+                        double R_i = params_.lambda_use * A[idx_i];
+                        if (R_i > 1e-9)
+                        {
+                            double eta_i = 1.0 + params_.k_burst * (R_i / (R_i + params_.R_half + 1e-9));
+
+                            double total_weight = 0.0;
+                            for (size_t idx_j : valid_targets_B)
+                            {
+                                total_weight += B[idx_j] * (1.0 - params_.sideB[idx_j].defense);
+                            }
+                            total_weight = std::max(total_weight, 1e-9);
+
+                            for (size_t idx_j : valid_targets_B)
+                            {
+                                double eff = params_.effectivenessAvsB[idx_i][idx_j];
+                                double w = (B[idx_j] * (1.0 - params_.sideB[idx_j].defense)) / total_weight;
+                                double damage = eff * R_i * eta_i * w;
+                                g_vec[M_ + idx_j] -= damage;
+                            }
+                        }
+                    }
                 }
             }
         }

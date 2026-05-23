@@ -44,6 +44,11 @@ EXPORT void* run_simulation(
     double kappa_uav,           // === НОВОЕ: влияние БПЛА на уязвимость ===
     double lambda_tech,         // === НОВОЕ: техдеградация разведывательных БПЛА ===
     double lambda_use,          // === НОВОЕ: боевое расходование FPV ===
+    
+    
+    double k_burst,
+    double R_half,
+    
     double dt,
     int steps,
     double tolerance,

@@ -20,13 +20,10 @@ class SettingsScreen extends StatelessWidget {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-
-                  
                   _buildSection(
                     'Влияние потерь на мораль',
                     [
@@ -53,7 +50,8 @@ class SettingsScreen extends StatelessWidget {
                       // === НОВОЕ: Влияние успехов противника на мораль ===
                       ParamField(
                         label: 'Влияние успехов противника',
-                        description: 'Рост морали при превосходстве над противником',
+                        description:
+                            'Рост морали при превосходстве над противником',
                         value: provider.epsilonSuccess,
                         onChanged: (v) => provider.updateGlobalParams(
                           epsilonSuccess: v,
@@ -64,7 +62,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   _buildSection(
                     'Влияние морали',
                     [
@@ -92,7 +90,8 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       ParamField(
                         label: 'Базовая уязвимость',
-                        description: 'Минимальная уязвимость при высокой морали',
+                        description:
+                            'Минимальная уязвимость при высокой морали',
                         value: provider.epsilonExp,
                         onChanged: (v) => provider.updateGlobalParams(
                           epsilonExp: v,
@@ -103,14 +102,15 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   // === НОВОЕ: Параметры БПЛА/FPV ===
                   _buildSection(
                     'Параметры БПЛА/FPV',
                     [
                       ParamField(
                         label: 'Влияние БПЛА на уязвимость (κ)',
-                        description: 'Насколько превосходство в БПЛА увеличивает уязвимость',
+                        description:
+                            'Насколько превосходство в БПЛА увеличивает уязвимость',
                         value: provider.kappaUav,
                         onChanged: (v) => provider.updateGlobalParams(
                           kappaUav: v,
@@ -121,7 +121,8 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       ParamField(
                         label: 'Техдеградация БПЛА (λₜ)',
-                        description: 'Скорость потери разведывательных дронов (РЭБ, отказы)',
+                        description:
+                            'Скорость потери разведывательных дронов (РЭБ, отказы)',
                         value: provider.lambdaTech,
                         onChanged: (v) => provider.updateGlobalParams(
                           lambdaTech: v,
@@ -133,7 +134,8 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       ParamField(
                         label: 'Расходование FPV (λᵤ)',
-                        description: 'Скорость боевого расходования ударных дронов',
+                        description:
+                            'Скорость боевого расходования ударных дронов',
                         value: provider.lambdaUse,
                         onChanged: (v) => provider.updateGlobalParams(
                           lambdaUse: v,
@@ -143,9 +145,31 @@ class SettingsScreen extends StatelessWidget {
                         step: 0.01,
                         decimalPlaces: 3,
                       ),
+                      ParamField(
+                        label: 'Бонус за залп (κᵦ)',
+                        description:
+                            'Максимальное усиление урона при массированном применении FPV',
+                        value: provider.kBurst,
+                        onChanged: (v) =>
+                            provider.updateGlobalParams(kBurst: v),
+                        minValue: 0,
+                        maxValue: 3,
+                        step: 0.1,
+                      ),
+                      ParamField(
+                        label: 'Порог насыщения (R½)',
+                        description:
+                            'Скорость расхода (дронов/мин) для 50% бонуса',
+                        value: provider.rHalf,
+                        onChanged: (v) => provider.updateGlobalParams(rHalf: v),
+                        minValue: 0.1,
+                        maxValue: 20,
+                        step: 0.5,
+                        decimalPlaces: 2,
+                      ),
                     ],
                   ),
-                  
+
                   _buildSection(
                     'Параметры интегрирования',
                     [
@@ -199,13 +223,14 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   _buildSection(
                     'Масштабирование',
                     [
                       ParamField(
                         label: 'Эталонная численность',
-                        description: 'Эталонная численность для масштабирования',
+                        description:
+                            'Эталонная численность для масштабирования',
                         value: provider.dRef,
                         onChanged: (v) => provider.updateGlobalParams(
                           dRef: v,
@@ -240,7 +265,8 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       ParamField(
                         label: 'Макс. множитель (Sₘₐₓ)',
-                        description: 'Верхняя граница масштабирующего множителя',
+                        description:
+                            'Верхняя граница масштабирующего множителя',
                         value: provider.sMax,
                         onChanged: (v) => provider.updateGlobalParams(
                           sMax: v,
@@ -256,9 +282,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          
           const SizedBox(height: 16),
-          
           const InfoBar(
             title: Text('Рекомендуемые значения'),
             content: Text(
@@ -267,9 +291,7 @@ class SettingsScreen extends StatelessWidget {
               'Для БПЛА: κ≈0.3–0.7, λₜ≈0.01, λᵤ≈0.1–0.2.',
             ),
           ),
-          
           const SizedBox(height: 16),
-          
           Button(
             onPressed: () => _resetSettings(context),
             child: const Row(

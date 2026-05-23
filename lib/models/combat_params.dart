@@ -28,6 +28,10 @@ class CombatParams {
   double lambdaTech;
   double lambdaUse;
   
+  // === НОВОЕ: Параметры урона от FPV ===
+  double kBurst;   // максимальный бонус к урону при залпе
+  double rHalf;    // скорость расхода для 50% бонуса
+  
   // Параметры масштабирования коэффициентов потерь
   double dRef;
   double pScale;
@@ -58,6 +62,9 @@ class CombatParams {
     this.kappaUav = 0.5,
     this.lambdaTech = 0.01,
     this.lambdaUse = 0.15,
+    // === НОВОЕ: Параметры урона от FPV ===
+    this.kBurst = 0.5,    // ← дефолт как в C++
+    this.rHalf = 5.0,     // ← дефолт как в C++
     this.dRef = 1000.0,
     this.pScale = 1.6,
     this.sMin = 0.0001,
@@ -72,7 +79,6 @@ class CombatParams {
         effectivenessBvsA = effectivenessBvsA ?? [];
 
   /// Разворачивает матрицу по тегам в полную матрицу по юнитам
-  /// Вызывается явно, когда пользователь хочет синхронизировать матрицы
   void expandTagMatrices() {
     if (sideA.isEmpty || sideB.isEmpty) {
       effectivenessAvsB = [];
@@ -80,7 +86,6 @@ class CombatParams {
       return;
     }
 
-    // A vs B
     effectivenessAvsB = List.generate(
       sideA.length,
       (i) => List.generate(
@@ -93,7 +98,6 @@ class CombatParams {
       ),
     );
 
-    // B vs A
     effectivenessBvsA = List.generate(
       sideB.length,
       (i) => List.generate(
@@ -108,7 +112,6 @@ class CombatParams {
   }
 
   /// Инициализирует полные матрицы единицами (по размерам юнитов)
-  /// Используется при добавлении/удалении юнитов для сохранения ручной настройки
   void resizeEffectivenessMatrices({double fillValue = 1.0}) {
     final m = sideA.length;
     final n = sideB.length;
@@ -119,13 +122,11 @@ class CombatParams {
       return;
     }
     
-    // Сохраняем старые значения
     final oldAvsB = List<List<double>>.from(
       effectivenessAvsB.map((row) => List<double>.from(row)));
     final oldBvsA = List<List<double>>.from(
       effectivenessBvsA.map((row) => List<double>.from(row)));
     
-    // Создаём новые матрицы
     effectivenessAvsB = List.generate(m, (i) {
       if (i < oldAvsB.length) {
         final oldRow = oldAvsB[i];
@@ -153,7 +154,6 @@ class CombatParams {
       'side_a': sideA.map((u) => u.toJson()).toList(),
       'side_b': sideB.map((u) => u.toJson()).toList(),
       
-      // === Сериализуем ОБЕ матрицы ===
       'tag_effectiveness_a_vs_b': {
         for (final entry in tagEffectivenessAvsB.entries)
           entry.key: Map.from(entry.value),
@@ -179,6 +179,9 @@ class CombatParams {
         'kappa_uav': kappaUav,
         'lambda_tech': lambdaTech,
         'lambda_use': lambdaUse,
+        // === НОВОЕ: Параметры урона от FPV ===
+        'k_burst': kBurst,
+        'r_half': rHalf,
       },
       'scaling': {
         'd_ref': dRef,
@@ -203,22 +206,19 @@ class CombatParams {
       sideB: (json['side_b'] as List?)
               ?.map((u) => UnitType.fromJson(u))
               .toList() ?? [],
-      // === Загружаем матрицы по тегам ===
       tagEffectivenessAvsB: _parseTagMatrix(json['tag_effectiveness_a_vs_b']),
       tagEffectivenessBvsA: _parseTagMatrix(json['tag_effectiveness_b_vs_a']),
-      // === Загружаем полные матрицы (если есть) ===
       effectivenessAvsB: _parseFullMatrix(json['effectiveness_a_vs_b']),
       effectivenessBvsA: _parseFullMatrix(json['effectiveness_b_vs_a']),
     );
     
-    // === Если полные матрицы пусты — разворачиваем из тегов ===
     if (params.effectivenessAvsB.isEmpty && 
         params.sideA.isNotEmpty && 
         params.sideB.isNotEmpty) {
       params.expandTagMatrices();
     }
     
-    // === Мораль ===
+    // Мораль
     final morale = json['morale'] as Map<String, dynamic>?;
     if (morale != null) {
       params.moralDebaffA = (morale['debaff_a'] ?? 0.01).toDouble();
@@ -226,7 +226,7 @@ class CombatParams {
       params.epsilonSuccess = (morale['epsilon_success'] ?? 0.5).toDouble();
     }
     
-    // === Влияние морали ===
+    // Влияние морали
     final moraleInf = json['morale_influence'] as Map<String, dynamic>?;
     if (moraleInf != null) {
       params.gammaAtt = (moraleInf['gamma_att'] ?? 1.0).toDouble();
@@ -234,15 +234,18 @@ class CombatParams {
       params.epsilonExp = (moraleInf['epsilon_exp'] ?? 0.05).toDouble();
     }
     
-    // === Параметры БПЛА ===
+    // Параметры БПЛА
     final uavParams = json['uav_params'] as Map<String, dynamic>?;
     if (uavParams != null) {
       params.kappaUav = (uavParams['kappa_uav'] ?? 0.5).toDouble();
       params.lambdaTech = (uavParams['lambda_tech'] ?? 0.01).toDouble();
       params.lambdaUse = (uavParams['lambda_use'] ?? 0.15).toDouble();
+      // === НОВОЕ: Параметры урона от FPV ===
+      params.kBurst = (uavParams['k_burst'] ?? 0.5).toDouble();
+      params.rHalf = (uavParams['r_half'] ?? 5.0).toDouble();
     }
     
-    // === Масштабирование ===
+    // Масштабирование
     final scaling = json['scaling'] as Map<String, dynamic>?;
     if (scaling != null) {
       params.dRef = (scaling['d_ref'] ?? 1000.0).toDouble();
@@ -251,7 +254,7 @@ class CombatParams {
       params.sMax = (scaling['s_max'] ?? 1.0).toDouble();
     }
     
-    // === Интегрирование ===
+    // Интегрирование
     final integration = json['integration'] as Map<String, dynamic>?;
     if (integration != null) {
       params.dt = (integration['dt'] ?? 0.01).toDouble();
@@ -263,7 +266,6 @@ class CombatParams {
     return params;
   }
   
-  /// Вспомогательный метод для парсинга матрицы тегов из JSON
   static Map<String, Map<String, double>> _parseTagMatrix(dynamic json) {
     if (json == null) return {};
     
@@ -281,7 +283,6 @@ class CombatParams {
     return result;
   }
   
-  /// Вспомогательный метод для парсинга полной матрицы из JSON
   static List<List<double>> _parseFullMatrix(dynamic json) {
     if (json == null) return [];
     

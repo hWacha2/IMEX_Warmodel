@@ -45,6 +45,10 @@ class StateManager with ChangeNotifier {
   double _kappaUav = 0.5;
   double _lambdaTech = 0.01;
   double _lambdaUse = 0.15;
+  
+  // === НОВОЕ: Параметры урона от FPV ===
+  double _kBurst = 0.5;   // ← максимальный бонус к урону при залпе
+  double _rHalf = 5.0;    // ← скорость расхода для 50% бонуса
 
   // Параметры масштабирования коэффициентов потерь
   double _dRef = 1000.0;
@@ -105,6 +109,10 @@ class StateManager with ChangeNotifier {
   double get kappaUav => _kappaUav;
   double get lambdaTech => _lambdaTech;
   double get lambdaUse => _lambdaUse;
+  
+  // === НОВОЕ: Геттеры для параметров урона от FPV ===
+  double get kBurst => _kBurst;   // ←
+  double get rHalf => _rHalf;     // ←
 
   double get dRef => _dRef;
   double get pScale => _pScale;
@@ -420,7 +428,19 @@ class StateManager with ChangeNotifier {
     }
   }
 
+  /// Сбрасывает матрицы к значениям по умолчанию (1.0)
   void resetEffectivenessMatrices() {
+    // 1. Сбрасываем матрицы по тегам к 1.0
+    for (final tagA in _tags) {
+      _tagEffectivenessAvsB[tagA] = {};
+      _tagEffectivenessBvsA[tagA] = {};
+      for (final tagB in _tags) {
+        _tagEffectivenessAvsB[tagA]![tagB] = 1.0;
+        _tagEffectivenessBvsA[tagA]![tagB] = 1.0;
+      }
+    }
+    
+    // 2. Пересчитываем полные матрицы на основе сброшенных тегов
     _rebuildFullMatrices();
     notifyListeners();
   }
@@ -442,6 +462,9 @@ class StateManager with ChangeNotifier {
     double? kappaUav,
     double? lambdaTech,
     double? lambdaUse,
+    // === НОВОЕ: Параметры урона от FPV ===
+    double? kBurst,   // ←
+    double? rHalf,    // ←
     // Масштабирование
     double? dRef,
     double? pScale,
@@ -464,6 +487,10 @@ class StateManager with ChangeNotifier {
     if (kappaUav != null) _kappaUav = kappaUav;
     if (lambdaTech != null) _lambdaTech = lambdaTech;
     if (lambdaUse != null) _lambdaUse = lambdaUse;
+    
+    // === НОВОЕ: Параметры урона от FPV ===
+    if (kBurst != null) _kBurst = kBurst;   // ←
+    if (rHalf != null) _rHalf = rHalf;      // ←
 
     if (dRef != null) _dRef = dRef;
     if (pScale != null) _pScale = pScale;
@@ -488,6 +515,9 @@ class StateManager with ChangeNotifier {
     _kappaUav = 0.5;
     _lambdaTech = 0.01;
     _lambdaUse = 0.15;
+    // === НОВОЕ: Сброс параметров урона от FPV ===
+    _kBurst = 0.5;   // ←
+    _rHalf = 5.0;    // ←
     _dRef = 1000.0;
     _pScale = 1.6;
     _sMin = 0.0001;
@@ -513,7 +543,7 @@ class StateManager with ChangeNotifier {
     // 1) Системные теги
     final defaultTags = {'пехота', 'бпла', 'фпв'};
 
-// 2) Теги из файла
+    // 2) Теги из файла
     final loadedTags = <String>{};
     for (final unit in params.sideA) {
       loadedTags.add(unit.tag);
@@ -522,12 +552,12 @@ class StateManager with ChangeNotifier {
       loadedTags.add(unit.tag);
     }
 
-// 3) Объединяем без повторов
+    // 3) Объединяем без повторов
     final merged = <String>{}
       ..addAll(defaultTags)
       ..addAll(loadedTags);
 
-// 4) Перезаписываем _tags
+    // 4) Перезаписываем _tags
     _tags
       ..clear()
       ..addAll(merged);
@@ -583,6 +613,9 @@ class StateManager with ChangeNotifier {
       kappaUav: params.kappaUav,
       lambdaTech: params.lambdaTech,
       lambdaUse: params.lambdaUse,
+      // === НОВОЕ: Параметры урона от FPV ===
+      kBurst: params.kBurst,   // ←
+      rHalf: params.rHalf,     // ←
       dRef: params.dRef,
       pScale: params.pScale,
       sMin: params.sMin,
@@ -624,6 +657,9 @@ class StateManager with ChangeNotifier {
       kappaUav: _kappaUav,
       lambdaTech: _lambdaTech,
       lambdaUse: _lambdaUse,
+      // === НОВОЕ: Параметры урона от FPV ===
+      kBurst: _kBurst,   // ←
+      rHalf: _rHalf,     // ←
       dRef: _dRef,
       pScale: _pScale,
       sMin: _sMin,

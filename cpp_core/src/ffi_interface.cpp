@@ -45,6 +45,8 @@ EXPORT void* run_simulation(
     double kappa_uav,
     double lambda_tech,
     double lambda_use,
+    double k_burst, 
+    double R_half,
     double dt,
     int steps,
     double tolerance,
@@ -71,6 +73,8 @@ EXPORT void* run_simulation(
     params.kappa_uav = kappa_uav;
     params.lambda_tech = lambda_tech;
     params.lambda_use = lambda_use;
+    params.k_burst = k_burst;
+    params.R_half = R_half;
     
     // Параметры интегрирования
     params.dt = dt;

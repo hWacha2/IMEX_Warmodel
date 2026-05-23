@@ -17,9 +17,9 @@ typedef RunSimulationNative = Pointer<Void> Function(
   Pointer<Double>, // suppliesA
   Pointer<Double>, // moraleDecaysA
   Pointer<Double>, // supplyDecaysA
-  Pointer<Double>, // cpSupplySensA (НОВОЕ)
-  Pointer<Bool>, // isUavA (НОВОЕ)
-  Pointer<Bool>, // isFpvA (НОВОЕ)
+  Pointer<Double>, // cpSupplySensA
+  Pointer<Bool>, // isUavA
+  Pointer<Bool>, // isFpvA
 
   // === Side B (11 параметров) ===
   Int32, // countB
@@ -31,32 +31,34 @@ typedef RunSimulationNative = Pointer<Void> Function(
   Pointer<Double>, // suppliesB
   Pointer<Double>, // moraleDecaysB
   Pointer<Double>, // supplyDecaysB
-  Pointer<Double>, // cpSupplySensB (НОВОЕ)
-  Pointer<Bool>, // isUavB (НОВОЕ)
-  Pointer<Bool>, // isFpvB (НОВОЕ)
+  Pointer<Double>, // cpSupplySensB
+  Pointer<Bool>, // isUavB
+  Pointer<Bool>, // isFpvB
 
   // === Матрицы эффективности ===
   Pointer<Double>, // effectivenessAvsB (m*n)
   Pointer<Double>, // effectivenessBvsA (n*m)
 
-  // === Глобальные параметры (16 значений) ===
+  // === Глобальные параметры (18 значений — +2 новых) ===
   Double, // moral_debaffA
   Double, // moral_debaffB
-  Double, // epsilon_success (НОВОЕ)
+  Double, // epsilon_success
   Double, // gamma_att
   Double, // gamma_exp
   Double, // epsilon_exp
-  Double, // kappa_uav (НОВОЕ)
-  Double, // lambda_tech (НОВОЕ)
-  Double, // lambda_use (НОВОЕ)
+  Double, // kappa_uav
+  Double, // lambda_tech
+  Double, // lambda_use
+  Double, // k_burst ← НОВОЕ: бонус за залп
+  Double, // R_half  ← НОВОЕ: порог насыщения
   Double, // dt
   Int32, // steps
   Double, // tolerance
   Int32, // max_newton_iter
   Double, // d_ref
   Double, // p_scale
-  Double, // s_min (НОВОЕ)
-  Double, // s_max (НОВОЕ)
+  Double, // s_min
+  Double, // s_max
 );
 
 typedef RunSimulationDart = Pointer<Void> Function(
@@ -86,23 +88,25 @@ typedef RunSimulationDart = Pointer<Void> Function(
   Pointer<Bool>,
   Pointer<Double>,
   Pointer<Double>,
-  double,
-  double,
-  double,
-  double,
-  double,
-  double,
-  double,
-  double,
-  double,
-  double,
-  int,
-  double,
-  int,
-  double,
-  double,
-  double,
-  double,
+  double, // moral_debaffA
+  double, // moral_debaffB
+  double, // epsilon_success
+  double, // gamma_att
+  double, // gamma_exp
+  double, // epsilon_exp
+  double, // kappa_uav
+  double, // lambda_tech
+  double, // lambda_use
+  double, // k_burst ← НОВОЕ
+  double, // R_half  ← НОВОЕ
+  double, // dt
+  int,    // steps
+  double, // tolerance
+  int,    // max_newton_iter
+  double, // d_ref
+  double, // p_scale
+  double, // s_min
+  double, // s_max
 );
 
 // ─────────────────────────────────────────────────────────────
@@ -119,6 +123,7 @@ typedef ResultsGetTypeCountDart = int Function(Pointer<Void>);
 
 typedef ResultsGetTime = Double Function(Pointer<Void>, Int32);
 typedef ResultsGetTimeDart = double Function(Pointer<Void>, int);
+
 typedef ResultsGetDouble1D = Double Function(Pointer<Void>, Int32);
 typedef ResultsGetDouble1DDart = double Function(Pointer<Void>, int);
 
@@ -377,7 +382,7 @@ class FfiService {
       }
     }
 
-    // === Вызов нативной функции (16 глобальных параметров) ===
+    // === Вызов нативной функции (18 глобальных параметров) ===
     final resultPtr = _runSimulation(
       // Side A (11 параметров)
       m, namesAPtr, countsAPtr, powersAPtr, defensesAPtr,
@@ -389,24 +394,26 @@ class FfiService {
       cpSensBPtr, isUavBPtr, isFpvBPtr,
       // Matrices
       effAvsBFlat, effBvsAFlat,
-      // Globals (16 параметров)
+      // Globals (18 параметров)
       params.moralDebaffA,
       params.moralDebaffB,
-      params.epsilonSuccess, // НОВОЕ
+      params.epsilonSuccess,
       params.gammaAtt,
       params.gammaExp,
       params.epsilonExp,
-      params.kappaUav, // НОВОЕ
-      params.lambdaTech, // НОВОЕ
-      params.lambdaUse, // НОВОЕ
+      params.kappaUav,
+      params.lambdaTech,
+      params.lambdaUse,
+      params.kBurst,  // ← НОВОЕ: бонус за залп
+      params.rHalf,   // ← НОВОЕ: порог насыщения
       params.dt,
       params.steps,
       params.tolerance,
       params.maxNewtonIter,
       params.dRef,
       params.pScale,
-      params.sMin, // НОВОЕ
-      params.sMax, // НОВОЕ
+      params.sMin,
+      params.sMax,
     );
 
     // === Очистка памяти (ВАЖНО!) ===
