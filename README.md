@@ -1,17 +1,14 @@
-# warmodel
+# Warmodel
 
-A new Flutter project.
+**Warmodel** — это гуи для имитационного моделирования динамики боевых действий, разработанный в рамках выпускной квалификационной работы. Приложение реализует расширенную многокомпонентную модель Ланчестера с учётом гетерогенности войск, морально-психологических факторов, логистики и применения беспилотных средств (БПЛА/FPV).
 
-## Getting Started
+## 🚀 Особенности
 
-This project is a starting point for a Flutter application.
+*   **Многофакторная модель:** Учитывает численность, боевую мощь, защиту, уровень снабжения и моральный дух подразделений.
+*   **Специализированные средства:** Моделирование разведывательных БПЛА (влияние на уязвимость противника) и ударных FPV-дронов (расходуемые боеприпасы с эффектом насыщения ПВО).
+*   **Высокая производительность:** Ядро написано на **C++** и интегрировано через FFI.
+*   **Жёсткие системы ОДУ:** Используется IMEX-схема (Implicit-Explicit) с операторным расщеплением для устойчивого интегрирования жёстких систем.
+*   **Кроссплатформенный интерфейс:** Современный UI на **Flutter** с использованием дизайн-системы Fluent UI.
+*   **Гибкая настройка:** Редактирование матриц эффективности, начальных параметров сторон и глобальных коэффициентов модели.
+*   **Визуализация и экспорт:** Построение графиков динамики боя в реальном времени и экспорт результатов в CSV/JSON.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
